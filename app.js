@@ -9,14 +9,18 @@ const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;
 
 function addDebugLog(msg, type = 'log') {
-  const panel = document.getElementById('debugPanel');
-  const log = document.getElementById('debugLog');
-  if (panel && log) {
-    panel.style.display = 'block';
-    const color = type === 'error' ? '#f00' : type === 'warn' ? '#ff0' : '#0f0';
-    const time = new Date().toLocaleTimeString();
-    log.innerHTML += `<div style="color:${color};margin:2px 0;">[${time}] ${msg}</div>`;
-    log.scrollTop = log.scrollHeight;
+  try {
+    const panel = document.getElementById('debugPanel');
+    const log = document.getElementById('debugLog');
+    if (panel && log) {
+      panel.style.display = 'block';
+      const color = type === 'error' ? '#f00' : type === 'warn' ? '#ff0' : '#0f0';
+      const time = new Date().toLocaleTimeString();
+      log.innerHTML += `<div style="color:${color};margin:2px 0;">[${time}] ${msg}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+  } catch (e) {
+    // Silently fail if DOM not ready
   }
 }
 
@@ -397,6 +401,11 @@ async function startShooting() {
 
   console.log('All photos captured:', state.photos.length, 'photos');
   console.log('Photo array check:', state.photos.map((p, i) => `Photo ${i}: ${p ? 'exists' : 'MISSING'}`));
+  
+  // TEST: Check if first photo is valid
+  console.log('Testing first photo validity...');
+  console.log('First photo starts with:', state.photos[0].substring(0, 50));
+  console.log('First photo length:', state.photos[0].length);
 
   state.shooting = false;
   showCountdownBoth(null);
@@ -405,6 +414,24 @@ async function startShooting() {
   
   // Show loading message
   showToast('✨ Creating your strip...');
+  console.log('About to call buildStrip...');
+  
+  // EMERGENCY TEST: Try to draw something simple directly
+  try {
+    console.log('EMERGENCY TEST: Drawing directly to canvas...');
+    stripCanvas.width = 404;
+    stripCanvas.height = 1800;
+    const testCtx = stripCanvas.getContext('2d');
+    testCtx.fillStyle = '#ff0000';
+    testCtx.fillRect(0, 0, 404, 1800);
+    testCtx.fillStyle = '#ffffff';
+    testCtx.font = '40px sans-serif';
+    testCtx.fillText('TEST', 150, 100);
+    stripSection.style.display = 'flex';
+    console.log('EMERGENCY TEST COMPLETE - you should see a red canvas with TEST text');
+  } catch (emergErr) {
+    console.error('EMERGENCY TEST FAILED:', emergErr.message);
+  }
   
   try {
     await buildStrip();
@@ -438,14 +465,16 @@ function send(data) {
 
 // ── Build strip ──────────────────────────────────────────
 async function buildStrip() {
-  console.log('buildStrip() called');
-  console.log('Photos:', state.photos.length, 'Partner photos:', state.partnerPhotos.length);
-  
   try {
+    console.log('buildStrip() STARTED');
+    console.log('Photos:', state.photos.length, 'Partner photos:', state.partnerPhotos.length);
+    
     // Validate we have all photos
     if (state.photos.length !== PHOTO_COUNT) {
       throw new Error('Not enough photos captured');
     }
+    
+    console.log('Photo count validated');
     
     const caption    = captionInput.value.trim();
     const showDate   = showDateChk.checked;
@@ -461,9 +490,11 @@ async function buildStrip() {
     const footerH = (caption || showDate) ? 70 : 32;
     const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
 
+    console.log('About to set canvas size:', SW, 'x', totalH);
     stripCanvas.width  = SW;
     stripCanvas.height = totalH;
 
+    console.log('Getting canvas context...');
     const ctx = stripCanvas.getContext('2d');
     if (!ctx) {
       throw new Error('Could not get canvas context');
@@ -471,6 +502,7 @@ async function buildStrip() {
     console.log('Canvas setup complete:', SW, 'x', totalH);
 
     // Draw background - simple solid color first
+    console.log('Drawing background color:', theme.color);
     ctx.fillStyle = theme.color || '#ffb7c5';
     ctx.fillRect(0, 0, SW, totalH);
     console.log('Background drawn');
@@ -479,13 +511,14 @@ async function buildStrip() {
     // Use setTimeout to prevent blocking on mobile
     if (typeof theme.draw === 'function') {
       try { 
+        console.log('Drawing theme decorations...');
         ctx.save();
         ctx.globalCompositeOperation = 'source-over';
         theme.draw(ctx, SW, totalH);
         ctx.restore();
         console.log('Theme decorations drawn');
       } catch(e) { 
-        console.warn('Theme draw error (continuing anyway):', e);
+        console.warn('Theme draw error (continuing anyway):', e.message);
         // Continue even if theme fails
       }
     }
@@ -504,6 +537,7 @@ async function buildStrip() {
           if (!state.photos[i]) throw new Error(`Missing my photo at index ${i}`);
           if (!state.partnerPhotos[i]) throw new Error(`Missing partner photo at index ${i}`);
           
+          console.log('Loading together photos', i);
           const myImg = await loadImage(state.photos[i]);
           const ptImg = await loadImage(state.partnerPhotos[i]);
           drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
@@ -511,12 +545,14 @@ async function buildStrip() {
         } else {
           if (!state.photos[i]) throw new Error(`Missing photo at index ${i}`);
           
+          console.log('Loading solo photo', i, 'data length:', state.photos[i].length);
           const img = await loadImage(state.photos[i]);
+          console.log('Image loaded, drawing...');
           drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
         }
         console.log('Photo', i+1, 'drawn');
       } catch (imgError) {
-        console.error('Error loading photo', i, ':', imgError);
+        console.error('Error loading photo', i, ':', imgError.message);
         throw imgError;
       }
     }
@@ -555,8 +591,8 @@ async function buildStrip() {
     console.log('buildStrip() completed successfully');
     
   } catch (error) {
-    console.error('Error in buildStrip():', error);
-    console.error('Error details:', error.message, error.stack);
+    console.error('Error in buildStrip():', error.message);
+    console.error('Error stack:', error.stack);
     throw error; // Re-throw to be caught by the calling function
   }
 }
