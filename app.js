@@ -418,43 +418,75 @@ async function startShooting() {
   
   // EMERGENCY TEST: Try to draw something simple directly
   try {
-    console.log('EMERGENCY TEST: Drawing directly to canvas...');
+    console.log('SKIPPING buildStrip - using direct simple build instead');
+    
+    const caption = captionInput.value.trim();
+    const showDate = showDateChk.checked;
+    const themeName = state.currentTheme || 'sakura';
+    const theme = THEMES[themeName];
+    const bgColor = theme ? theme.color : '#ffb7c5';
+    
+    console.log('Using theme:', themeName, 'color:', bgColor);
+    
     stripCanvas.width = 404;
     stripCanvas.height = 1800;
-    const testCtx = stripCanvas.getContext('2d');
-    testCtx.fillStyle = '#ff0000';
-    testCtx.fillRect(0, 0, 404, 1800);
-    testCtx.fillStyle = '#ffffff';
-    testCtx.font = '40px sans-serif';
-    testCtx.fillText('TEST', 150, 100);
+    const ctx = stripCanvas.getContext('2d');
+    
+    // Background
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, 404, 1800);
+    console.log('Background drawn');
+    
+    // Draw each photo
+    for (let i = 0; i < 4; i++) {
+      const y = 22 + i * (360 + 22);
+      console.log('Loading photo', i, '...');
+      
+      try {
+        const img = await loadImage(state.photos[i]);
+        console.log('Photo', i, 'loaded, drawing at y:', y);
+        ctx.drawImage(img, 22, y, 360, 360);
+        console.log('Photo', i, 'drawn!');
+      } catch (imgErr) {
+        console.error('Failed to load photo', i, ':', imgErr.message);
+        // Draw error box
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(22, y, 360, 360);
+        ctx.fillStyle = '#fff';
+        ctx.font = '30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Error', 202, y + 180);
+      }
+    }
+    
+    // Footer text
+    if (caption || showDate) {
+      ctx.fillStyle = '#222';
+      ctx.textAlign = 'center';
+      const baseY = 1730;
+      
+      if (caption) {
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText(caption, 202, baseY);
+      }
+      if (showDate) {
+        ctx.font = '13px sans-serif';
+        const d = new Date().toLocaleDateString();
+        ctx.fillText(d, 202, caption ? baseY + 26 : baseY);
+      }
+    }
+    
     stripSection.style.display = 'flex';
-    console.log('EMERGENCY TEST COMPLETE - you should see a red canvas with TEST text');
+    console.log('Strip built and displayed!');
+    showToast('🎉 Strip ready!');
+    
   } catch (emergErr) {
-    console.error('EMERGENCY TEST FAILED:', emergErr.message);
+    console.error('Build failed:', emergErr.message);
+    console.error('Stack:', emergErr.stack);
+    showToast('⚠️ Error: ' + emergErr.message);
   }
   
-  try {
-    await buildStrip();
-    console.log('Strip built successfully');
-    showToast('🎉 Strip ready!');
-  } catch (err) {
-    console.error('Error building strip:', err);
-    console.error('Error type:', err.name);
-    console.error('Error message:', err.message);
-    
-    // Try a simplified version without theme decorations
-    try {
-      console.log('Attempting simplified strip...');
-      await buildSimpleStrip();
-      showToast('✨ Strip created (simple mode)');
-    } catch (simpleErr) {
-      console.error('Simple strip also failed:', simpleErr);
-      showToast('⚠️ Error creating strip. Check console.');
-      
-      // Show the strip section anyway so user can see what we have
-      stripSection.style.display = 'flex';
-    }
-  }
+  return; // Skip the old buildStrip calls
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
