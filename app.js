@@ -400,21 +400,7 @@ async function startShooting() {
   }
 
   console.log('All photos captured:', state.photos.length, 'photos');
-  console.log('Photo array check:', state.photos.map((p, i) => `Photo ${i}: ${p ? 'exists' : 'MISSING'}`));
   
-  // TEST: Check if first photo is valid
-  try {
-    console.log('Testing first photo validity...');
-    if (state.photos[0]) {
-      console.log('First photo starts with:', state.photos[0].substring(0, 50));
-      console.log('First photo length:', state.photos[0].length);
-    } else {
-      console.error('First photo is null/undefined!');
-    }
-  } catch (testErr) {
-    console.error('Error testing photo:', testErr.message);
-  }
-
   state.shooting = false;
   showCountdownBoth(null);
   retakeBtn.classList.remove('hidden');
@@ -422,59 +408,48 @@ async function startShooting() {
   
   // Show loading message
   showToast('✨ Creating your strip...');
-  console.log('About to build strip...');
+  console.log('Starting strip build process...');
   
-  // EMERGENCY TEST: Try to draw something simple directly
+  // Direct simple build
   try {
-    console.log('SKIPPING buildStrip - using direct simple build instead');
-    
+    console.log('Step 1: Get theme info');
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
-    const themeName = state.currentTheme || 'sakura';
+    const bgColor = '#ffb7c5'; // Use simple pink for now
     
-    console.log('Checking THEMES object...');
-    if (typeof THEMES === 'undefined') {
-      console.error('THEMES is undefined!');
-    } else {
-      console.log('THEMES exists, keys:', Object.keys(THEMES).join(', '));
-    }
-    
-    const theme = THEMES[themeName];
-    const bgColor = theme ? theme.color : '#ffb7c5';
-    
-    console.log('Using theme:', themeName, 'color:', bgColor);
-    
+    console.log('Step 2: Setup canvas');
     stripCanvas.width = 404;
     stripCanvas.height = 1800;
     const ctx = stripCanvas.getContext('2d');
     
-    // Background
+    console.log('Step 3: Draw background');
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, 404, 1800);
-    console.log('Background drawn');
     
+    console.log('Step 4: Draw photos');
     // Draw each photo
     for (let i = 0; i < 4; i++) {
       const y = 22 + i * (360 + 22);
-      console.log('Loading photo', i, '...');
+      console.log('Drawing photo', i+1, 'of 4...');
       
       try {
         const img = await loadImage(state.photos[i]);
-        console.log('Photo', i, 'loaded, drawing at y:', y);
         ctx.drawImage(img, 22, y, 360, 360);
-        console.log('Photo', i, 'drawn!');
+        console.log('Photo', i+1, 'drawn successfully');
       } catch (imgErr) {
-        console.error('Failed to load photo', i, ':', imgErr.message);
+        console.error('Photo', i+1, 'failed:', imgErr.message);
         // Draw error box
         ctx.fillStyle = '#ff0000';
         ctx.fillRect(22, y, 360, 360);
         ctx.fillStyle = '#fff';
         ctx.font = '30px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Error', 202, y + 180);
+        ctx.fillText('Error ' + (i+1), 202, y + 180);
+        ctx.fillStyle = bgColor; // Reset
       }
     }
     
+    console.log('Step 5: Draw text');
     // Footer text
     if (caption || showDate) {
       ctx.fillStyle = '#222';
@@ -492,17 +467,21 @@ async function startShooting() {
       }
     }
     
+    console.log('Step 6: Show strip');
     stripSection.style.display = 'flex';
-    console.log('Strip built and displayed!');
+    await new Promise(r => setTimeout(r, 100));
+    stripSection.scrollIntoView({ behavior: 'smooth' });
+    
+    console.log('SUCCESS: Strip complete!');
     showToast('🎉 Strip ready!');
     
-  } catch (emergErr) {
-    console.error('Build failed:', emergErr.message);
-    console.error('Stack:', emergErr.stack);
-    showToast('⚠️ Error: ' + emergErr.message);
+  } catch (err) {
+    console.error('FAILED at some step:', err.message);
+    console.error('Full error:', err);
+    showToast('⚠️ Error: ' + err.message);
+    // Show strip section anyway
+    stripSection.style.display = 'flex';
   }
-  
-  return; // Skip the old buildStrip calls
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
