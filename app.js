@@ -403,9 +403,17 @@ async function startShooting() {
   console.log('Photo array check:', state.photos.map((p, i) => `Photo ${i}: ${p ? 'exists' : 'MISSING'}`));
   
   // TEST: Check if first photo is valid
-  console.log('Testing first photo validity...');
-  console.log('First photo starts with:', state.photos[0].substring(0, 50));
-  console.log('First photo length:', state.photos[0].length);
+  try {
+    console.log('Testing first photo validity...');
+    if (state.photos[0]) {
+      console.log('First photo starts with:', state.photos[0].substring(0, 50));
+      console.log('First photo length:', state.photos[0].length);
+    } else {
+      console.error('First photo is null/undefined!');
+    }
+  } catch (testErr) {
+    console.error('Error testing photo:', testErr.message);
+  }
 
   state.shooting = false;
   showCountdownBoth(null);
@@ -414,7 +422,7 @@ async function startShooting() {
   
   // Show loading message
   showToast('✨ Creating your strip...');
-  console.log('About to call buildStrip...');
+  console.log('About to build strip...');
   
   // EMERGENCY TEST: Try to draw something simple directly
   try {
@@ -423,6 +431,14 @@ async function startShooting() {
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
     const themeName = state.currentTheme || 'sakura';
+    
+    console.log('Checking THEMES object...');
+    if (typeof THEMES === 'undefined') {
+      console.error('THEMES is undefined!');
+    } else {
+      console.log('THEMES exists, keys:', Object.keys(THEMES).join(', '));
+    }
+    
     const theme = THEMES[themeName];
     const bgColor = theme ? theme.color : '#ffb7c5';
     
