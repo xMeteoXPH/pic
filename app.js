@@ -416,50 +416,208 @@ async function startShooting() {
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
     
-    // Define themes inline with decorations
+    // Define themes inline with professional decorations
     const themes = {
       'sakura': { 
         color: '#ffd6e7',
         draw: (ctx, w, h) => {
-          // Gradient
+          // Multi-layer gradient
           const g = ctx.createLinearGradient(0, 0, w, h);
           g.addColorStop(0, '#fff0f5');
-          g.addColorStop(0.5, '#ffd6e7');
+          g.addColorStop(0.4, '#ffd6e7');
           g.addColorStop(1, '#ffb7c5');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
           
-          // Simple scattered hearts
-          ctx.fillStyle = 'rgba(255,77,136,0.15)';
-          for (let i = 0; i < 20; i++) {
-            const x = (i * 137.5) % w;
-            const y = (i * 61.8) % h;
-            const size = 8 + (i % 3) * 4;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
+          // Radial glow
+          const glow = ctx.createRadialGradient(w*0.3, h*0.2, 0, w*0.3, h*0.2, w*0.6);
+          glow.addColorStop(0, 'rgba(255,200,220,0.3)');
+          glow.addColorStop(1, 'rgba(255,200,220,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Cherry blossom petals
+          ctx.fillStyle = 'rgba(255,77,136,0.25)';
+          for (let i = 0; i < 35; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 12 + (i % 4) * 6;
+            // 5-petal flower
+            for (let p = 0; p < 5; p++) {
+              const angle = (Math.PI * 2 / 5) * p;
+              ctx.beginPath();
+              ctx.ellipse(x + Math.cos(angle) * size * 0.5, y + Math.sin(angle) * size * 0.5, 
+                          size * 0.35, size * 0.2, angle, 0, Math.PI * 2);
+              ctx.fill();
+            }
           }
+          
+          // Elegant border
+          ctx.strokeStyle = 'rgba(255,77,136,0.4)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,77,136,0.2)';
+          ctx.strokeRect(14, 14, w - 28, h - 28);
         }
       },
-      'midnight-rose': { color: '#2a0018' },
-      'cottagecore': { color: '#fde8c8' },
+      'midnight-rose': { 
+        color: '#2a0018',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#1a0010');
+          g.addColorStop(0.5, '#3d0030');
+          g.addColorStop(1, '#1a001a');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Glowing orbs
+          [{x:0.2, y:0.2, r:0.4}, {x:0.8, y:0.65, r:0.45}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, o.r*w);
+            gl.addColorStop(0, 'rgba(180,0,80,0.18)');
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          
+          // Roses pattern
+          ctx.fillStyle = 'rgba(204,0,60,0.35)';
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 18 + (i % 3) * 8;
+            // Rose spiral
+            for (let r = 0; r < 3; r++) {
+              ctx.beginPath();
+              ctx.arc(x, y, size - r * 6, 0, Math.PI * 2);
+              ctx.globalAlpha = 0.15 - r * 0.03;
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
+          
+          ctx.strokeStyle = 'rgba(204,0,60,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'cottagecore': { 
+        color: '#fde8c8',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#fffbf0');
+          g.addColorStop(0.5, '#fde8c8');
+          g.addColorStop(1, '#f5d0a0');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Linen texture
+          ctx.globalAlpha = 0.04;
+          ctx.strokeStyle = '#c8a87a';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < w; i += 4) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, h);
+            ctx.stroke();
+          }
+          for (let i = 0; i < h; i += 4) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(w, i);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          
+          // Wildflowers
+          const colors = ['#e8765a', '#d45a3a', '#f29070'];
+          for (let i = 0; i < 28; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 14 + (i % 3) * 6;
+            const col = colors[i % 3];
+            
+            // Flower
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.4;
+            for (let p = 0; p < 6; p++) {
+              const angle = (Math.PI * 2 / 6) * p;
+              ctx.beginPath();
+              ctx.arc(x + Math.cos(angle) * size * 0.4, y + Math.sin(angle) * size * 0.4, size * 0.3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            // Center
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          }
+          
+          // Decorative border
+          ctx.strokeStyle = 'rgba(200,120,58,0.5)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+          // Corner ornaments
+          const corner = 25;
+          ctx.lineWidth = 2;
+          [[8,8], [w-8,8], [8,h-8], [w-8,h-8]].forEach(([cx, cy]) => {
+            const xDir = cx < w/2 ? 1 : -1;
+            const yDir = cy < h/2 ? 1 : -1;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + yDir * corner);
+            ctx.lineTo(cx, cy);
+            ctx.lineTo(cx + xDir * corner, cy);
+            ctx.stroke();
+          });
+        }
+      },
       'aurora': { 
         color: '#050a14',
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#050a14');
-          g.addColorStop(0.5, '#08122a');
+          g.addColorStop(0.4, '#08122a');
           g.addColorStop(1, '#050a14');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
           
+          // Aurora bands
+          [
+            {color: 'rgba(0,255,180,0.2)', y: 0.15},
+            {color: 'rgba(60,80,255,0.18)', y: 0.35},
+            {color: 'rgba(0,200,255,0.2)', y: 0.58},
+            {color: 'rgba(160,0,255,0.16)', y: 0.78}
+          ].forEach(band => {
+            const gg = ctx.createLinearGradient(0, band.y * h - 60, 0, band.y * h + 60);
+            gg.addColorStop(0, 'rgba(0,0,0,0)');
+            gg.addColorStop(0.5, band.color);
+            gg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          });
+          
           // Stars
-          ctx.fillStyle = 'rgba(255,255,255,0.4)';
-          for (let i = 0; i < 40; i++) {
-            const x = (i * 137.5) % w;
-            const y = (i * 61.8) % h;
-            ctx.fillRect(x, y, 1, 1);
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 120; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.5 + (i % 4) * 0.4;
+            ctx.globalAlpha = 0.3 + (i % 5) * 0.14;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
           }
+          ctx.globalAlpha = 1;
+          
+          // Gradient border
+          const borderGrad = ctx.createLinearGradient(0, 0, w, h);
+          borderGrad.addColorStop(0, 'rgba(0,255,180,0.5)');
+          borderGrad.addColorStop(0.5, 'rgba(80,120,255,0.5)');
+          borderGrad.addColorStop(1, 'rgba(160,0,255,0.5)');
+          ctx.strokeStyle = borderGrad;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
       'golden-hour': { 
@@ -467,23 +625,197 @@ async function startShooting() {
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#ff6b35');
-          g.addColorStop(0.5, '#ff9f1c');
+          g.addColorStop(0.35, '#ff9f1c');
+          g.addColorStop(0.7, '#ffcb47');
           g.addColorStop(1, '#ffe08a');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
+          
+          // Sun glow
+          const sun = ctx.createRadialGradient(w * 0.5, -h * 0.1, 0, w * 0.5, -h * 0.1, w * 0.75);
+          sun.addColorStop(0, 'rgba(255,245,180,0.5)');
+          sun.addColorStop(0.5, 'rgba(255,200,60,0.15)');
+          sun.addColorStop(1, 'rgba(255,140,0,0)');
+          ctx.fillStyle = sun;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Light rays
+          ctx.globalAlpha = 0.08;
+          ctx.strokeStyle = '#fff9e0';
+          ctx.lineWidth = 3;
+          for (let a = 0; a < 12; a++) {
+            const angle = (a / 12) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.5, 0);
+            ctx.lineTo(w * 0.5 + Math.cos(angle) * w * 1.5, Math.sin(angle) * h * 1.5);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          
+          // Bokeh circles
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 5) * 7;
+            ctx.strokeStyle = 'rgba(255,249,204,0.15)';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.08 + (i % 4) * 0.02;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          
+          ctx.strokeStyle = 'rgba(255,107,53,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
-      'lavender-dream': { color: '#e9d5ff' },
-      'neon-cyber': { color: '#03001e' },
+      'lavender-dream': { 
+        color: '#e9d5ff',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#f3e8ff');
+          g.addColorStop(0.5, '#e9d5ff');
+          g.addColorStop(1, '#c4b5fd');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Soft glows
+          [{x:0.2,y:0.25,r:0.45,c:'rgba(167,139,250,0.2)'}, {x:0.8,y:0.7,r:0.5,c:'rgba(192,132,252,0.18)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, o.r*w);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          
+          // Sparkles and stars
+          for (let i = 0; i < 30; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 6 + (i % 4) * 5;
+            ctx.fillStyle = '#8b5cf6';
+            ctx.globalAlpha = 0.35 + (i % 3) * 0.15;
+            // 4-point star
+            ctx.beginPath();
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.4;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              if (p === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          
+          ctx.strokeStyle = 'rgba(139,92,246,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'neon-cyber': { 
+        color: '#03001e',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#03001e');
+          g.addColorStop(0.5, '#0a0030');
+          g.addColorStop(1, '#03001e');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Grid
+          ctx.strokeStyle = 'rgba(0,255,224,0.12)';
+          ctx.lineWidth = 0.5;
+          for (let x = 0; x < w; x += 25) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+          }
+          for (let y = 0; y < h; y += 25) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+          }
+          
+          // Glowing blobs
+          [{x:0.2,y:0.25,c:'rgba(0,255,224,0.15)'}, {x:0.85,y:0.75,c:'rgba(255,0,128,0.15)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, w*0.4);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          
+          // Neon diamonds
+          const colors = ['#00ffe0', '#ff0080', '#7700ff'];
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 5 + (i % 4) * 4;
+            const col = colors[i % 3];
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size * 0.6, y);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x - size * 0.6, y);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          
+          // Gradient border
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(0,255,224,0.7)');
+          borderG.addColorStop(0.5, 'rgba(255,0,128,0.7)');
+          borderG.addColorStop(1, 'rgba(119,0,255,0.7)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
       'blue-sky': { 
         color: '#bae6fd',
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#bae6fd');
-          g.addColorStop(0.7, '#7dd3fc');
+          g.addColorStop(0.6, '#7dd3fc');
           g.addColorStop(1, '#38bdf8');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
+          
+          // Sun
+          const sun = ctx.createRadialGradient(w * 0.8, h * 0.08, 0, w * 0.8, h * 0.08, 70);
+          sun.addColorStop(0, 'rgba(255,245,150,0.95)');
+          sun.addColorStop(0.4, 'rgba(255,220,80,0.3)');
+          sun.addColorStop(1, 'rgba(255,180,0,0)');
+          ctx.fillStyle = sun;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Fluffy clouds
+          const clouds = [[0.15,0.12,28], [0.55,0.08,24], [0.35,0.22,36], [0.75,0.18,20], 
+                          [0.12,0.38,30], [0.88,0.45,26], [0.25,0.65,28], [0.7,0.7,24]];
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          clouds.forEach(([xf, yf, r]) => {
+            const cx = xf * w;
+            const cy = yf * h;
+            [[-r*0.5,r*0.1], [0,-r*0.1], [r*0.5,r*0.1], [r*0.9,r*0.2], [-r*0.9,r*0.2], [0,r*0.25]].forEach(([dx, dy]) => {
+              ctx.beginPath();
+              ctx.arc(cx + dx, cy + dy, r * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          });
+          
+          ctx.strokeStyle = 'rgba(14,165,233,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
       'forest-moss': { color: '#dcfce7' },
@@ -852,38 +1184,108 @@ function rebuildIfReady() {
   if (state.photos.length === PHOTO_COUNT) {
     console.log('Rebuilding strip after settings change...');
     
-    // Rebuild using same simple method
+    // Rebuild using same method with decorations
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
     
-    const themeColors = {
-      'sakura': '#ffd6e7',
-      'midnight-rose': '#2a0018',
-      'cottagecore': '#fde8c8',
-      'aurora': '#050a14',
-      'golden-hour': '#ff9f1c',
-      'lavender-dream': '#e9d5ff',
-      'neon-cyber': '#03001e',
-      'blue-sky': '#bae6fd',
-      'forest-moss': '#dcfce7',
-      'galaxy': '#0d0630',
-      'retro-film': '#f0e8d0',
-      'y2k-holo': '#ffe0f7',
-      'dark-academia': '#2d1e0a',
-      'winter-snow': '#e0f2fe',
-      'velvet-night': '#0a0014',
-      'pastel-candy': '#fff0f8'
+    // Define themes inline with decorations (same as build)
+    const themes = {
+      'sakura': { 
+        color: '#ffd6e7',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#fff0f5');
+          g.addColorStop(0.5, '#ffd6e7');
+          g.addColorStop(1, '#ffb7c5');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(255,77,136,0.15)';
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 4;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      },
+      'midnight-rose': { color: '#2a0018' },
+      'cottagecore': { color: '#fde8c8' },
+      'aurora': { 
+        color: '#050a14',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#050a14');
+          g.addColorStop(0.5, '#08122a');
+          g.addColorStop(1, '#050a14');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          for (let i = 0; i < 40; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      },
+      'golden-hour': { 
+        color: '#ff9f1c',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#ff6b35');
+          g.addColorStop(0.5, '#ff9f1c');
+          g.addColorStop(1, '#ffe08a');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+        }
+      },
+      'lavender-dream': { color: '#e9d5ff' },
+      'neon-cyber': { color: '#03001e' },
+      'blue-sky': { 
+        color: '#bae6fd',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#bae6fd');
+          g.addColorStop(0.7, '#7dd3fc');
+          g.addColorStop(1, '#38bdf8');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+        }
+      },
+      'forest-moss': { color: '#dcfce7' },
+      'galaxy': { color: '#0d0630' },
+      'retro-film': { color: '#f0e8d0' },
+      'y2k-holo': { color: '#ffe0f7' },
+      'dark-academia': { color: '#2d1e0a' },
+      'winter-snow': { color: '#e0f2fe' },
+      'velvet-night': { color: '#0a0014' },
+      'pastel-candy': { color: '#fff0f8' }
     };
     
-    const bgColor = themeColors[state.currentTheme] || '#ffb7c5';
+    const theme = themes[state.currentTheme] || themes['sakura'];
     
     stripCanvas.width = 404;
     stripCanvas.height = 1800;
     const ctx = stripCanvas.getContext('2d');
     
-    // Background
-    ctx.fillStyle = bgColor;
+    // Background with decorations
+    ctx.fillStyle = theme.color;
     ctx.fillRect(0, 0, 404, 1800);
+    
+    if (theme.draw) {
+      try {
+        ctx.save();
+        theme.draw(ctx, 404, 1800);
+        ctx.restore();
+      } catch (e) {
+        console.warn('Theme decoration failed:', e.message);
+      }
+    }
+    
+    // Reset context
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
     
     // Draw photos
     state.photos.forEach((photoData, i) => {
