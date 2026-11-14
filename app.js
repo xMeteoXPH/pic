@@ -328,7 +328,14 @@ async function startShooting() {
   showCountdownBoth(null);
   retakeBtn.classList.remove('hidden');
   startHint.textContent = '';
-  await buildStrip();
+  
+  try {
+    await buildStrip();
+    console.log('Strip built successfully');
+  } catch (err) {
+    console.error('Error building strip:', err);
+    showToast('⚠️ Error creating strip. Please retake.');
+  }
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -339,72 +346,104 @@ function send(data) {
 
 // ── Build strip ──────────────────────────────────────────
 async function buildStrip() {
-  const caption    = captionInput.value.trim();
-  const showDate   = showDateChk.checked;
-  const theme      = THEMES[state.currentTheme] || THEMES['sakura'];
-  const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
+  console.log('buildStrip() called');
+  console.log('Photos:', state.photos.length, 'Partner photos:', state.partnerPhotos.length);
+  
+  try {
+    const caption    = captionInput.value.trim();
+    const showDate   = showDateChk.checked;
+    const theme      = THEMES[state.currentTheme] || THEMES['sakura'];
+    const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
 
-  const PW = isTogether ? TOG_PW : PHOTO_W;
-  const PH = isTogether ? TOG_PH : PHOTO_H;
-  const SW = isTogether ? TOG_SW : STRIP_W;
+    console.log('Theme:', state.currentTheme, 'Mode:', state.mode, 'isTogether:', isTogether);
 
-  const footerH = (caption || showDate) ? 70 : 32;
-  const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
+    const PW = isTogether ? TOG_PW : PHOTO_W;
+    const PH = isTogether ? TOG_PH : PHOTO_H;
+    const SW = isTogether ? TOG_SW : STRIP_W;
 
-  stripCanvas.width  = SW;
-  stripCanvas.height = totalH;
+    const footerH = (caption || showDate) ? 70 : 32;
+    const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
 
-  const ctx = stripCanvas.getContext('2d');
+    stripCanvas.width  = SW;
+    stripCanvas.height = totalH;
 
-  // Draw background
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = theme.color || '#ffb7c5';
-  ctx.fillRect(0, 0, SW, totalH);
-  // Draw aesthetic decorations on top (if theme has them)
-  if (typeof theme.draw === 'function') {
-    ctx.save();
-    ctx.globalCompositeOperation = 'source-over';
-    try { theme.draw(ctx, SW, totalH); } catch(e) { console.warn('Theme draw error:', e); }
-    ctx.restore();
+    const ctx = stripCanvas.getContext('2d');
+    console.log('Canvas setup complete:', SW, 'x', totalH);
+
+    // Draw background
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
-  }
-
-  // Draw photos with rounded corners
-  for (let i = 0; i < PHOTO_COUNT; i++) {
-    const y = PADDING + i * (PH + PADDING);
-    if (isTogether) {
-      const myImg = await loadImage(state.photos[i]);
-      const ptImg = await loadImage(state.partnerPhotos[i]);
-      drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
-      drawRoundedImage(ctx, ptImg, PADDING + PW + PADDING, y, PW, PH, 8);
-    } else {
-      const img = await loadImage(state.photos[i]);
-      drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
+    ctx.fillStyle = theme.color || '#ffb7c5';
+    ctx.fillRect(0, 0, SW, totalH);
+    console.log('Background drawn');
+    
+    // Draw aesthetic decorations on top (if theme has them)
+    if (typeof theme.draw === 'function') {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      try { 
+        theme.draw(ctx, SW, totalH);
+        console.log('Theme decorations drawn');
+      } catch(e) { 
+        console.warn('Theme draw error:', e); 
+      }
+      ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
     }
-  }
 
-  // Footer
-  const textColor = theme.text || '#222';
-  ctx.fillStyle   = textColor;
-  ctx.textAlign   = 'center';
-  const baseY = totalH - footerH + 20;
+    // Draw photos with rounded corners
+    console.log('Starting to draw photos...');
+    for (let i = 0; i < PHOTO_COUNT; i++) {
+      const y = PADDING + i * (PH + PADDING);
+      if (isTogether) {
+        if (!state.photos[i] || !state.partnerPhotos[i]) {
+          console.error('Missing photo at index', i);
+          throw new Error(`Missing photo data at index ${i}`);
+        }
+        const myImg = await loadImage(state.photos[i]);
+        const ptImg = await loadImage(state.partnerPhotos[i]);
+        drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
+        drawRoundedImage(ctx, ptImg, PADDING + PW + PADDING, y, PW, PH, 8);
+      } else {
+        if (!state.photos[i]) {
+          console.error('Missing photo at index', i);
+          throw new Error(`Missing photo data at index ${i}`);
+        }
+        const img = await loadImage(state.photos[i]);
+        drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
+      }
+      console.log('Photo', i+1, 'drawn');
+    }
 
-  if (caption) {
-    ctx.font = `bold 18px 'Nunito', sans-serif`;
-    ctx.fillText(caption, SW / 2, baseY);
-  }
-  if (showDate) {
-    ctx.font = `13px 'Nunito', sans-serif`;
-    ctx.globalAlpha = 0.6;
-    const d = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    ctx.fillText(d, SW / 2, caption ? baseY + 26 : baseY);
-    ctx.globalAlpha = 1;
-  }
+    // Footer
+    const textColor = theme.text || '#222';
+    ctx.fillStyle   = textColor;
+    ctx.textAlign   = 'center';
+    const baseY = totalH - footerH + 20;
 
-  stripSection.style.display = 'flex';
-  stripSection.scrollIntoView({ behavior: 'smooth' });
+    if (caption) {
+      ctx.font = `bold 18px 'Nunito', sans-serif`;
+      ctx.fillText(caption, SW / 2, baseY);
+      console.log('Caption drawn:', caption);
+    }
+    if (showDate) {
+      ctx.font = `13px 'Nunito', sans-serif`;
+      ctx.globalAlpha = 0.6;
+      const d = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      ctx.fillText(d, SW / 2, caption ? baseY + 26 : baseY);
+      ctx.globalAlpha = 1;
+      console.log('Date drawn:', d);
+    }
+
+    console.log('Showing strip section...');
+    stripSection.style.display = 'flex';
+    stripSection.scrollIntoView({ behavior: 'smooth' });
+    console.log('buildStrip() completed successfully');
+  } catch (error) {
+    console.error('Error in buildStrip():', error);
+    throw error; // Re-throw to be caught by the calling function
+  }
 }
 
 function drawRoundedImage(ctx, img, x, y, w, h, r) {
