@@ -291,14 +291,16 @@ function captureMyFrame() {
   ctx.filter = state.currentFilter === 'none' ? 'none' : state.currentFilter;
   ctx.drawImage(state.mode === 'together' ? videoMe : video, 0, 0, PHOTO_W, PHOTO_H);
   ctx.restore();
-  return captureCanvas.toDataURL('image/jpeg', 0.92);
+  // Lower quality for mobile compatibility (0.85 instead of 0.92)
+  return captureCanvas.toDataURL('image/jpeg', 0.85);
 }
 
 function capturePartnerFrame(index) {
   const el = document.getElementById('videoPartner');
   const ctx = capturePartner.getContext('2d');
   ctx.drawImage(el, 0, 0, PHOTO_W, PHOTO_H);
-  state.partnerPhotos[index] = capturePartner.toDataURL('image/jpeg', 0.92);
+  // Lower quality for mobile compatibility
+  state.partnerPhotos[index] = capturePartner.toDataURL('image/jpeg', 0.85);
 }
 
 // ── Shoot sequence ───────────────────────────────────────
@@ -329,12 +331,30 @@ async function startShooting() {
   retakeBtn.classList.remove('hidden');
   startHint.textContent = '';
   
+  // Show loading message
+  showToast('✨ Creating your strip...');
+  
   try {
     await buildStrip();
     console.log('Strip built successfully');
+    showToast('🎉 Strip ready!');
   } catch (err) {
     console.error('Error building strip:', err);
-    showToast('⚠️ Error creating strip. Please retake.');
+    console.error('Error type:', err.name);
+    console.error('Error message:', err.message);
+    
+    // Try a simplified version without theme decorations
+    try {
+      console.log('Attempting simplified strip...');
+      await buildSimpleStrip();
+      showToast('✨ Strip created (simple mode)');
+    } catch (simpleErr) {
+      console.error('Simple strip also failed:', simpleErr);
+      showToast('⚠️ Error creating strip. Check console.');
+      
+      // Show the strip section anyway so user can see what we have
+      stripSection.style.display = 'flex';
+    }
   }
 }
 
@@ -350,6 +370,11 @@ async function buildStrip() {
   console.log('Photos:', state.photos.length, 'Partner photos:', state.partnerPhotos.length);
   
   try {
+    // Validate we have all photos
+    if (state.photos.length !== PHOTO_COUNT) {
+      throw new Error('Not enough photos captured');
+    }
+    
     const caption    = captionInput.value.trim();
     const showDate   = showDateChk.checked;
     const theme      = THEMES[state.currentTheme] || THEMES['sakura'];
@@ -368,53 +393,65 @@ async function buildStrip() {
     stripCanvas.height = totalH;
 
     const ctx = stripCanvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
+    }
     console.log('Canvas setup complete:', SW, 'x', totalH);
 
-    // Draw background
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
+    // Draw background - simple solid color first
     ctx.fillStyle = theme.color || '#ffb7c5';
     ctx.fillRect(0, 0, SW, totalH);
     console.log('Background drawn');
     
     // Draw aesthetic decorations on top (if theme has them)
+    // Use setTimeout to prevent blocking on mobile
     if (typeof theme.draw === 'function') {
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
       try { 
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
         theme.draw(ctx, SW, totalH);
+        ctx.restore();
         console.log('Theme decorations drawn');
       } catch(e) { 
-        console.warn('Theme draw error:', e); 
+        console.warn('Theme draw error (continuing anyway):', e);
+        // Continue even if theme fails
       }
-      ctx.restore();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
     }
+
+    // Reset context state to ensure photos draw correctly
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
 
     // Draw photos with rounded corners
     console.log('Starting to draw photos...');
     for (let i = 0; i < PHOTO_COUNT; i++) {
       const y = PADDING + i * (PH + PADDING);
-      if (isTogether) {
-        if (!state.photos[i] || !state.partnerPhotos[i]) {
-          console.error('Missing photo at index', i);
-          throw new Error(`Missing photo data at index ${i}`);
+      
+      try {
+        if (isTogether) {
+          if (!state.photos[i]) throw new Error(`Missing my photo at index ${i}`);
+          if (!state.partnerPhotos[i]) throw new Error(`Missing partner photo at index ${i}`);
+          
+          const myImg = await loadImage(state.photos[i]);
+          const ptImg = await loadImage(state.partnerPhotos[i]);
+          drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
+          drawRoundedImage(ctx, ptImg, PADDING + PW + PADDING, y, PW, PH, 8);
+        } else {
+          if (!state.photos[i]) throw new Error(`Missing photo at index ${i}`);
+          
+          const img = await loadImage(state.photos[i]);
+          drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
         }
-        const myImg = await loadImage(state.photos[i]);
-        const ptImg = await loadImage(state.partnerPhotos[i]);
-        drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
-        drawRoundedImage(ctx, ptImg, PADDING + PW + PADDING, y, PW, PH, 8);
-      } else {
-        if (!state.photos[i]) {
-          console.error('Missing photo at index', i);
-          throw new Error(`Missing photo data at index ${i}`);
-        }
-        const img = await loadImage(state.photos[i]);
-        drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
+        console.log('Photo', i+1, 'drawn');
+      } catch (imgError) {
+        console.error('Error loading photo', i, ':', imgError);
+        throw imgError;
       }
-      console.log('Photo', i+1, 'drawn');
     }
+
+    // Reset context for text
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
 
     // Footer
     const textColor = theme.text || '#222';
@@ -438,12 +475,78 @@ async function buildStrip() {
 
     console.log('Showing strip section...');
     stripSection.style.display = 'flex';
-    stripSection.scrollIntoView({ behavior: 'smooth' });
+    
+    // Small delay to ensure DOM updates on mobile
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    stripSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     console.log('buildStrip() completed successfully');
+    
   } catch (error) {
     console.error('Error in buildStrip():', error);
+    console.error('Error details:', error.message, error.stack);
     throw error; // Re-throw to be caught by the calling function
   }
+}
+
+// ── Build simple strip (fallback without theme decorations) ──
+async function buildSimpleStrip() {
+  console.log('buildSimpleStrip() called - no theme decorations');
+  
+  const caption    = captionInput.value.trim();
+  const showDate   = showDateChk.checked;
+  const theme      = THEMES[state.currentTheme] || THEMES['sakura'];
+  const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
+
+  const PW = isTogether ? TOG_PW : PHOTO_W;
+  const PH = isTogether ? TOG_PH : PHOTO_H;
+  const SW = isTogether ? TOG_SW : STRIP_W;
+
+  const footerH = (caption || showDate) ? 70 : 32;
+  const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
+
+  stripCanvas.width  = SW;
+  stripCanvas.height = totalH;
+
+  const ctx = stripCanvas.getContext('2d');
+
+  // Simple solid background only
+  ctx.fillStyle = theme.color || '#ffb7c5';
+  ctx.fillRect(0, 0, SW, totalH);
+
+  // Draw photos - NO rounded corners, just simple rectangles
+  for (let i = 0; i < PHOTO_COUNT; i++) {
+    const y = PADDING + i * (PH + PADDING);
+    if (isTogether) {
+      const myImg = await loadImage(state.photos[i]);
+      const ptImg = await loadImage(state.partnerPhotos[i]);
+      ctx.drawImage(myImg, PADDING, y, PW, PH);
+      ctx.drawImage(ptImg, PADDING + PW + PADDING, y, PW, PH);
+    } else {
+      const img = await loadImage(state.photos[i]);
+      ctx.drawImage(img, PADDING, y, PW, PH);
+    }
+  }
+
+  // Simple text
+  ctx.fillStyle = theme.text || '#222';
+  ctx.textAlign = 'center';
+  const baseY = totalH - footerH + 20;
+
+  if (caption) {
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(caption, SW / 2, baseY);
+  }
+  if (showDate) {
+    ctx.font = '13px sans-serif';
+    const d = new Date().toLocaleDateString();
+    ctx.fillText(d, SW / 2, caption ? baseY + 26 : baseY);
+  }
+
+  stripSection.style.display = 'flex';
+  await new Promise(resolve => setTimeout(resolve, 100));
+  stripSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  console.log('Simple strip complete');
 }
 
 function drawRoundedImage(ctx, img, x, y, w, h, r) {
@@ -463,8 +566,18 @@ function drawRoundedImage(ctx, img, x, y, w, h, r) {
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
+    const timeout = setTimeout(() => {
+      reject(new Error('Image load timeout'));
+    }, 5000); // 5 second timeout
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(img);
+    };
+    img.onerror = (err) => {
+      clearTimeout(timeout);
+      reject(err);
+    };
     img.src = src;
   });
 }
