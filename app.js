@@ -774,7 +774,69 @@ function loadImage(src) {
 }
 
 function rebuildIfReady() {
-  if (state.photos.length === PHOTO_COUNT) buildStrip();
+  if (state.photos.length === PHOTO_COUNT) {
+    console.log('Rebuilding strip after settings change...');
+    
+    // Rebuild using same simple method
+    const caption = captionInput.value.trim();
+    const showDate = showDateChk.checked;
+    
+    const themeColors = {
+      'sakura': '#ffd6e7',
+      'midnight-rose': '#2a0018',
+      'cottagecore': '#fde8c8',
+      'aurora': '#050a14',
+      'golden-hour': '#ff9f1c',
+      'lavender-dream': '#e9d5ff',
+      'neon-cyber': '#03001e',
+      'blue-sky': '#bae6fd',
+      'forest-moss': '#dcfce7',
+      'galaxy': '#0d0630',
+      'retro-film': '#f0e8d0',
+      'y2k-holo': '#ffe0f7',
+      'dark-academia': '#2d1e0a',
+      'winter-snow': '#e0f2fe',
+      'velvet-night': '#0a0014',
+      'pastel-candy': '#fff0f8'
+    };
+    
+    const bgColor = themeColors[state.currentTheme] || '#ffb7c5';
+    
+    stripCanvas.width = 404;
+    stripCanvas.height = 1800;
+    const ctx = stripCanvas.getContext('2d');
+    
+    // Background
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, 404, 1800);
+    
+    // Draw photos
+    state.photos.forEach((photoData, i) => {
+      const img = new Image();
+      img.onload = () => {
+        const y = 22 + i * (360 + 22);
+        ctx.drawImage(img, 22, y, 360, 360);
+        
+        // Draw text on last photo
+        if (i === 3 && (caption || showDate)) {
+          ctx.fillStyle = '#222';
+          ctx.textAlign = 'center';
+          const baseY = 1730;
+          
+          if (caption) {
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillText(caption, 202, baseY);
+          }
+          if (showDate) {
+            ctx.font = '13px sans-serif';
+            const d = new Date().toLocaleDateString();
+            ctx.fillText(d, 202, caption ? baseY + 26 : baseY);
+          }
+        }
+      };
+      img.src = photoData;
+    });
+  }
 }
 
 captionInput.addEventListener('input', rebuildIfReady);
