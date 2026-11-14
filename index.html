@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>💕 Our Photo Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Floating background shapes -->
+  <div class="bg-shapes">
+    <div class="shape s1">🌸</div>
+    <div class="shape s2">⭐</div>
+    <div class="shape s3">💕</div>
+    <div class="shape s4">🌙</div>
+    <div class="shape s5">✨</div>
+    <div class="shape s6">🎀</div>
+    <div class="shape s7">💫</div>
+    <div class="shape s8">🌷</div>
+  </div>
+
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-deco">✦ ✦ ✦</div>
+      <h1>Our Photo Booth</h1>
+      <p class="subtitle">capture the moment 📸</p>
+    </header>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector">
+      <button class="mode-btn active" id="soloModeBtn" onclick="setMode('solo')">
+        <span class="mode-icon">🙋</span>
+        <span class="mode-label">Solo</span>
+      </button>
+      <button class="mode-btn" id="togetherModeBtn" onclick="setMode('together')">
+        <span class="mode-icon">💑</span>
+        <span class="mode-label">Together</span>
+      </button>
+    </div>
+
+    <!-- TOGETHER PANEL -->
+    <div class="together-panel hidden" id="togetherPanel">
+      <div class="room-section" id="roomSetup">
+        <p class="together-hint">💌 Create a room and share the code with your partner</p>
+        <div class="room-actions">
+          <button class="btn-primary" onclick="createRoom()">✨ Create Room</button>
+          <div class="or-divider"><span>or</span></div>
+          <div class="join-row">
+            <input type="text" id="roomCodeInput" placeholder="ROOM CODE" maxlength="6" />
+            <button class="btn-join" onclick="joinRoom()">Join →</button>
+          </div>
+        </div>
+      </div>
+      <div class="room-connected hidden" id="roomConnected">
+        <div class="room-code-box">
+          <span class="room-code-label">Room Code</span>
+          <span id="roomCodeDisplay" class="room-code-value"></span>
+          <button class="copy-btn" onclick="copyRoomCode()">📋 Copy</button>
+        </div>
+        <div class="partner-status" id="partnerStatus">
+          <span class="dot waiting"></span> Waiting for partner...
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMIZATION -->
+    <div class="controls-card">
+
+      <!-- Strip Theme -->
+      <div class="control-group">
+        <label class="ctrl-label">✦ Strip Theme</label>
+        <div class="theme-scroll">
+          <button class="theme-btn active" data-theme="sakura"><span class="theme-preview" style="background:linear-gradient(135deg,#fff0f5,#ffb7c5)"></span><span>🌸 Sakura</span></button>
+          <button class="theme-btn" data-theme="midnight-rose"><span class="theme-preview" style="background:linear-gradient(135deg,#1a0010,#3d0030)"></span><span>🥀 Midnight</span></button>
+          <button class="theme-btn" data-theme="cottagecore"><span class="theme-preview" style="background:linear-gradient(135deg,#fffbf0,#fde8c8)"></span><span>🍄 Cottage</span></button>
+          <button class="theme-btn" data-theme="aurora"><span class="theme-preview" style="background:linear-gradient(135deg,#050a14,#0d2040)"></span><span>🌌 Aurora</span></button>
+          <button class="theme-btn" data-theme="golden-hour"><span class="theme-preview" style="background:linear-gradient(135deg,#ff6b35,#ffe08a)"></span><span>🌅 Golden</span></button>
+          <button class="theme-btn" data-theme="lavender-dream"><span class="theme-preview" style="background:linear-gradient(135deg,#f3e8ff,#c4b5fd)"></span><span>💜 Lavender</span></button>
+          <button class="theme-btn" data-theme="neon-cyber"><span class="theme-preview" style="background:#03001e;border:1px solid #00ffe0"></span><span>⚡ Cyber</span></button>
+          <button class="theme-btn" data-theme="blue-sky"><span class="theme-preview" style="background:linear-gradient(135deg,#bae6fd,#38bdf8)"></span><span>☁️ Sky</span></button>
+          <button class="theme-btn" data-theme="forest-moss"><span class="theme-preview" style="background:linear-gradient(135deg,#f0fdf4,#86efac)"></span><span>🌿 Forest</span></button>
+          <button class="theme-btn" data-theme="galaxy"><span class="theme-preview" style="background:linear-gradient(135deg,#02011a,#1a0545)"></span><span>🪐 Galaxy</span></button>
+          <button class="theme-btn" data-theme="retro-film"><span class="theme-preview" style="background:linear-gradient(135deg,#f5efe0,#d4b896)"></span><span>🎞️ Film</span></button>
+          <button class="theme-btn" data-theme="y2k-holo"><span class="theme-preview" style="background:linear-gradient(135deg,#ffe0f7,#d0f0ff,#e8d0ff)"></span><span>✨ Y2K</span></button>
+          <button class="theme-btn" data-theme="dark-academia"><span class="theme-preview" style="background:linear-gradient(135deg,#1a1208,#2d1e0a)"></span><span>📚 Academia</span></button>
+          <button class="theme-btn" data-theme="winter-snow"><span class="theme-preview" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd)"></span><span>❄️ Snow</span></button>
+          <button class="theme-btn" data-theme="velvet-night"><span class="theme-preview" style="background:linear-gradient(135deg,#0a0014,#3b0764)"></span><span>🌙 Velvet</span></button>
+          <button class="theme-btn" data-theme="pastel-candy"><span class="theme-preview" style="background:linear-gradient(135deg,#fff0f8,#ffd6e0)"></span><span>🍭 Candy</span></button>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="control-group">
+        <label class="ctrl-label">✦ Filter</label>
+        <div class="filter-scroll">
+          <button class="filter-btn active" data-filter="none"><span class="filter-icon">🌿</span>Normal</button>
+          <button class="filter-btn" data-filter="grayscale(100%)"><span class="filter-icon">🖤</span>B&W</button>
+          <button class="filter-btn" data-filter="sepia(90%)"><span class="filter-icon">🍂</span>Sepia</button>
+          <button class="filter-btn" data-filter="saturate(220%) contrast(110%)"><span class="filter-icon">🌈</span>Vivid</button>
+          <button class="filter-btn" data-filter="hue-rotate(180deg) saturate(150%)"><span class="filter-icon">🧊</span>Cool</button>
+          <button class="filter-btn" data-filter="hue-rotate(330deg) saturate(180%) brightness(105%)"><span class="filter-icon">🌅</span>Warm</button>
+          <button class="filter-btn" data-filter="contrast(160%) brightness(115%)"><span class="filter-icon">☀️</span>Bright</button>
+          <button class="filter-btn" data-filter="brightness(110%) contrast(90%) saturate(140%) hue-rotate(330deg)"><span class="filter-icon">🌸</span>Blush</button>
+          <button class="filter-btn" data-filter="saturate(0%) brightness(125%) contrast(80%)"><span class="filter-icon">🤍</span>Soft</button>
+          <button class="filter-btn" data-filter="hue-rotate(90deg) saturate(200%) brightness(95%)"><span class="filter-icon">🍃</span>Forest</button>
+          <button class="filter-btn" data-filter="sepia(40%) hue-rotate(330deg) saturate(200%)"><span class="filter-icon">🫧</span>Y2K</button>
+          <button class="filter-btn" data-filter="invert(100%) hue-rotate(180deg)"><span class="filter-icon">👾</span>Glitch</button>
+          <button class="filter-btn" data-filter="contrast(200%) brightness(90%)"><span class="filter-icon">🎭</span>Drama</button>
+          <button class="filter-btn" data-filter="brightness(130%) saturate(50%) contrast(90%)"><span class="filter-icon">☁️</span>Faded</button>
+          <button class="filter-btn" data-filter="hue-rotate(270deg) saturate(150%) brightness(90%)"><span class="filter-icon">💜</span>Violet</button>
+          <button class="filter-btn" data-filter="sepia(100%) saturate(400%) hue-rotate(290deg)"><span class="filter-icon">🩷</span>Pink Pop</button>
+          <button class="filter-btn" data-filter="contrast(110%) saturate(180%) hue-rotate(15deg)"><span class="filter-icon">🍊</span>Peach</button>
+          <button class="filter-btn" data-filter="brightness(80%) contrast(120%) saturate(130%)"><span class="filter-icon">🌙</span>Moody</button>
+          <button class="filter-btn" data-filter="grayscale(60%) sepia(40%) contrast(120%)"><span class="filter-icon">📽️</span>Film</button>
+          <button class="filter-btn" data-filter="saturate(300%) hue-rotate(200deg) brightness(90%)"><span class="filter-icon">💙</span>Ice</button>
+        </div>
+      </div>
+
+      <!-- Caption -->
+      <div class="control-group">
+        <label class="ctrl-label">✦ Caption</label>
+        <input type="text" id="captionInput" placeholder="write something cute here ♡" maxlength="40" />
+      </div>
+
+      <!-- Date toggle -->
+      <div class="control-group inline-group">
+        <label class="ctrl-label">✦ Show Date</label>
+        <label class="toggle">
+          <input type="checkbox" id="showDate" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- CAMERA -->
+    <div class="camera-section">
+
+      <!-- Solo -->
+      <div class="video-wrapper" id="soloCamera">
+        <video id="video" autoplay playsinline muted></video>
+        <div id="countdown" class="countdown hidden"></div>
+        <div id="flash" class="flash hidden"></div>
+        <div class="camera-frame-deco">
+          <span class="corner tl"></span>
+          <span class="corner tr"></span>
+          <span class="corner bl"></span>
+          <span class="corner br"></span>
+        </div>
+      </div>
+
+      <!-- Together -->
+      <div class="dual-camera hidden" id="dualCamera">
+        <div class="cam-box">
+          <div class="cam-label">💙 You</div>
+          <div class="video-wrapper small">
+            <video id="videoMe" autoplay playsinline muted></video>
+            <div id="countdownMe" class="countdown hidden"></div>
+            <div id="flashMe" class="flash hidden"></div>
+          </div>
+        </div>
+        <div class="cam-box">
+          <div class="cam-label" id="partnerLabel">🩷 Partner</div>
+          <div class="video-wrapper small" id="partnerVideoWrapper">
+            <video id="videoPartner" autoplay playsinline muted></video>
+            <div id="countdownPartner" class="countdown hidden"></div>
+            <div id="flashPartner" class="flash hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dots -->
+      <div class="shot-indicators">
+        <div class="shot-dot" id="dot0">1</div>
+        <div class="shot-dot" id="dot1">2</div>
+        <div class="shot-dot" id="dot2">3</div>
+        <div class="shot-dot" id="dot3">4</div>
+      </div>
+
+      <!-- Controls -->
+      <div class="camera-controls">
+        <button id="startBtn" class="btn-shutter">
+          <span class="shutter-inner"></span>
+        </button>
+        <button id="retakeBtn" class="btn-retake hidden">🔄 Retake</button>
+      </div>
+      <p class="start-hint" id="startHint">tap the button to start!</p>
+
+    </div>
+
+    <!-- STRIP RESULT -->
+    <div class="strip-section" id="stripSection" style="display:none">
+      <div class="strip-header">
+        <h2>✨ Your Strip is Ready!</h2>
+      </div>
+      <div class="strip-wrapper">
+        <canvas id="stripCanvas"></canvas>
+      </div>
+      <div class="strip-actions">
+        <button id="downloadBtn" class="btn-primary">⬇ Save Strip</button>
+        <button id="newBtn" class="btn-ghost">📸 New Session</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <canvas id="captureCanvas" style="display:none"></canvas>
+  <canvas id="captureCanvasPartner" style="display:none"></canvas>
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="themes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

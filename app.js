@@ -1,0 +1,480 @@
+// ─────────────────────────────────────────────────────────
+//  Photo Booth App  —  Solo + Together (WebRTC via PeerJS)
+// ─────────────────────────────────────────────────────────
+
+// ── Constants ──────────────────────────────────────────
+const PHOTO_COUNT      = 4;
+const COUNTDOWN_SEC    = 3;
+const BETWEEN_SHOTS_MS = 900;
+const PHOTO_W          = 360;
+const PHOTO_H          = 360;
+const PADDING          = 22;
+const STRIP_W          = PHOTO_W + PADDING * 2;
+const TOG_PW           = 260;
+const TOG_PH           = 260;
+const TOG_SW           = TOG_PW * 2 + PADDING * 3;
+
+// ── State ───────────────────────────────────────────────
+const state = {
+  mode: 'solo', stream: null,
+  photos: [], partnerPhotos: [],
+  currentFilter: 'none',
+  currentTheme: 'sakura',
+  shooting: false,
+  peer: null, conn: null,
+  isHost: false, partnerReady: false, roomCode: null,
+};
+
+// ── Element refs ────────────────────────────────────────
+const video            = document.getElementById('video');
+const videoMe          = document.getElementById('videoMe');
+const captureCanvas    = document.getElementById('captureCanvas');
+const capturePartner   = document.getElementById('captureCanvasPartner');
+const stripCanvas      = document.getElementById('stripCanvas');
+const countdown        = document.getElementById('countdown');
+const countdownMe      = document.getElementById('countdownMe');
+const countdownPartner = document.getElementById('countdownPartner');
+const flash            = document.getElementById('flash');
+const flashMe          = document.getElementById('flashMe');
+const flashPartner     = document.getElementById('flashPartner');
+const startBtn         = document.getElementById('startBtn');
+const retakeBtn        = document.getElementById('retakeBtn');
+const downloadBtn      = document.getElementById('downloadBtn');
+const newBtn           = document.getElementById('newBtn');
+const stripSection     = document.getElementById('stripSection');
+const captionInput     = document.getElementById('captionInput');
+const showDateChk      = document.getElementById('showDate');
+const soloCamera       = document.getElementById('soloCamera');
+const dualCamera       = document.getElementById('dualCamera');
+const togetherPanel    = document.getElementById('togetherPanel');
+const roomSetup        = document.getElementById('roomSetup');
+const roomConnected    = document.getElementById('roomConnected');
+const roomCodeDisplay  = document.getElementById('roomCodeDisplay');
+const partnerStatus    = document.getElementById('partnerStatus');
+const roomCodeInput    = document.getElementById('roomCodeInput');
+const startHint        = document.getElementById('startHint');
+
+captureCanvas.width  = PHOTO_W; captureCanvas.height = PHOTO_H;
+capturePartner.width = PHOTO_W; capturePartner.height = PHOTO_H;
+
+// ── Mode switching ───────────────────────────────────────
+function setMode(mode) {
+  state.mode = mode;
+  document.getElementById('soloModeBtn').classList.toggle('active', mode === 'solo');
+  document.getElementById('togetherModeBtn').classList.toggle('active', mode === 'together');
+  togetherPanel.classList.toggle('hidden', mode === 'solo');
+  soloCamera.classList.toggle('hidden', mode === 'together');
+  dualCamera.classList.toggle('hidden', mode === 'solo');
+  if (mode === 'together' && state.stream) videoMe.srcObject = state.stream;
+  if (mode === 'solo' && state.stream) video.srcObject = state.stream;
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  if (state.mode === 'together') {
+    startBtn.disabled = !state.partnerReady;
+    startHint.textContent = state.partnerReady ? 'tap the button to start!' : 'waiting for partner...';
+  } else {
+    startBtn.disabled = false;
+    startHint.textContent = 'tap the button to start!';
+  }
+}
+
+// ── Camera init ─────────────────────────────────────────
+async function initCamera() {
+  try {
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 720 }, height: { ideal: 720 }, facingMode: 'user' },
+      audio: false,
+    });
+    video.srcObject   = state.stream;
+    videoMe.srcObject = state.stream;
+  } catch (err) {
+    showToast('⚠️ Camera error: ' + err.message);
+  }
+}
+
+// ── Theme buttons ────────────────────────────────────────
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentTheme = btn.dataset.theme;
+    rebuildIfReady();
+  });
+});
+
+// ── Filter buttons ───────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.currentFilter = btn.dataset.filter;
+    applyVideoFilter(state.currentFilter);
+  });
+});
+
+function applyVideoFilter(f) {
+  const val = f === 'none' ? '' : f;
+  video.style.filter   = val;
+  videoMe.style.filter = val;
+}
+
+// ── PeerJS ───────────────────────────────────────────────
+function generateCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += c[Math.floor(Math.random() * c.length)];
+  return code;
+}
+
+function createRoom() {
+  state.isHost = true;
+  state.roomCode = generateCode();
+  state.peer = new Peer('photobooth-' + state.roomCode, { debug: 0 });
+  state.peer.on('open', () => { showRoomConnected(state.roomCode); showToast('Room created! Share the code 💌'); });
+  state.peer.on('connection', conn => { state.conn = conn; setupConnection(conn); });
+  state.peer.on('error', e => {
+    if (e.type === 'unavailable-id') { state.peer.destroy(); createRoom(); }
+    else showToast('Error: ' + e.message);
+  });
+}
+
+function joinRoom() {
+  const code = roomCodeInput.value.trim().toUpperCase();
+  if (code.length < 4) { showToast('Enter a valid room code'); return; }
+  state.isHost = false; state.roomCode = code;
+  state.peer = new Peer(undefined, { debug: 0 });
+  state.peer.on('open', () => {
+    const conn = state.peer.connect('photobooth-' + code, { reliable: true });
+    state.conn = conn; setupConnection(conn); showRoomConnected(code);
+    showToast('Connecting...');
+  });
+  state.peer.on('error', () => showToast('Could not connect. Check the code.'));
+}
+
+function setupConnection(conn) {
+  conn.on('open', () => {
+    state.partnerReady = true; setPartnerConnected(); updateStartBtn();
+    showToast('💑 Partner connected!'); startVideoStream(conn);
+  });
+  conn.on('data', handleMessage);
+  conn.on('close', () => {
+    state.partnerReady = false; updateStartBtn(); setPartnerDisconnected();
+    showToast('Partner disconnected 😢');
+  });
+}
+
+let streamInterval = null;
+function startVideoStream(conn) {
+  if (streamInterval) clearInterval(streamInterval);
+  const tmp = document.createElement('canvas');
+  tmp.width = 240; tmp.height = 240;
+  const tc = tmp.getContext('2d');
+  streamInterval = setInterval(() => {
+    if (!state.stream || !conn || !conn.open) return;
+    tc.save(); tc.translate(240, 0); tc.scale(-1, 1);
+    tc.filter = state.currentFilter === 'none' ? 'none' : state.currentFilter;
+    tc.drawImage(videoMe, 0, 0, 240, 240);
+    tc.restore();
+    conn.send({ type: 'videoFrame', frame: tmp.toDataURL('image/jpeg', 0.3) });
+  }, 80);
+}
+
+function handleMessage(data) {
+  if (data.type === 'videoFrame') renderPartnerFrame(data.frame);
+  else if (data.type === 'countdown') showCountdownBoth(data.number);
+  else if (data.type === 'capture') capturePartnerFrame(data.index);
+  else if (data.type === 'flash') { triggerFlashEl(flashPartner); triggerFlashEl(flashMe); }
+}
+
+// ── Partner video canvas ─────────────────────────────────
+(function patchPartnerVideo() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 240; canvas.height = 240;
+  canvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+  canvas.id = 'videoPartner';
+  const ctx = canvas.getContext('2d');
+  const wrapper = document.getElementById('partnerVideoWrapper');
+  wrapper.replaceChild(canvas, document.getElementById('videoPartner'));
+  let frame = null;
+  canvas.setFrame = img => { frame = img; };
+  (function loop() {
+    if (frame) {
+      ctx.drawImage(frame, 0, 0, 240, 240);
+    } else {
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 0, 240, 240);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.font = 'bold 13px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('waiting for partner ♡', 120, 120);
+    }
+    requestAnimationFrame(loop);
+  })();
+  canvas._setFrame = img => { frame = img; };
+})();
+
+function renderPartnerFrame(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const c = document.getElementById('videoPartner');
+    if (c && c._setFrame) c._setFrame(img);
+  };
+  img.src = dataUrl;
+}
+
+// ── Partner status ───────────────────────────────────────
+function showRoomConnected(code) {
+  roomSetup.classList.add('hidden');
+  roomConnected.classList.remove('hidden');
+  roomCodeDisplay.textContent = code;
+}
+function setPartnerConnected() {
+  partnerStatus.innerHTML = `<span class="dot connected"></span> Partner connected 💑`;
+}
+function setPartnerDisconnected() {
+  partnerStatus.innerHTML = `<span class="dot waiting"></span> Waiting for partner...`;
+}
+function copyRoomCode() {
+  navigator.clipboard.writeText(state.roomCode).then(() => showToast('Code copied! 📋'));
+}
+
+// ── Shot dots ────────────────────────────────────────────
+function setDot(i, done) {
+  const d = document.getElementById('dot' + i);
+  if (done) d.classList.add('done'); else d.classList.remove('done');
+}
+function resetDots() { for (let i = 0; i < PHOTO_COUNT; i++) setDot(i, false); }
+
+// ── Flash ────────────────────────────────────────────────
+function triggerFlashEl(el) {
+  el.classList.remove('hidden', 'go');
+  void el.offsetWidth;
+  el.classList.add('go');
+  setTimeout(() => el.classList.add('hidden'), 500);
+}
+function triggerFlash() {
+  if (state.mode === 'together') triggerFlashEl(flashMe);
+  else triggerFlashEl(flash);
+}
+
+// ── Countdown ────────────────────────────────────────────
+function showCountdownBoth(n) {
+  const els = state.mode === 'together' ? [countdownMe, countdownPartner] : [countdown];
+  els.forEach(el => {
+    if (n === null) { el.classList.add('hidden'); el.textContent = ''; }
+    else {
+      el.classList.remove('hidden'); el.textContent = n;
+      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    }
+  });
+}
+
+function runCountdown(sec) {
+  return new Promise(resolve => {
+    let r = sec;
+    const tick = () => {
+      if (r <= 0) { showCountdownBoth(null); resolve(); return; }
+      showCountdownBoth(r);
+      if (state.mode === 'together') send({ type: 'countdown', number: r });
+      r--; setTimeout(tick, 1000);
+    };
+    tick();
+  });
+}
+
+// ── Capture ──────────────────────────────────────────────
+function captureMyFrame() {
+  const ctx = captureCanvas.getContext('2d');
+  ctx.save(); ctx.translate(PHOTO_W, 0); ctx.scale(-1, 1);
+  ctx.filter = state.currentFilter === 'none' ? 'none' : state.currentFilter;
+  ctx.drawImage(state.mode === 'together' ? videoMe : video, 0, 0, PHOTO_W, PHOTO_H);
+  ctx.restore();
+  return captureCanvas.toDataURL('image/jpeg', 0.92);
+}
+
+function capturePartnerFrame(index) {
+  const el = document.getElementById('videoPartner');
+  const ctx = capturePartner.getContext('2d');
+  ctx.drawImage(el, 0, 0, PHOTO_W, PHOTO_H);
+  state.partnerPhotos[index] = capturePartner.toDataURL('image/jpeg', 0.92);
+}
+
+// ── Shoot sequence ───────────────────────────────────────
+async function startShooting() {
+  if (state.shooting) return;
+  if (state.mode === 'together' && !state.partnerReady) { showToast('Waiting for partner 💌'); return; }
+  state.shooting = true;
+  state.photos = []; state.partnerPhotos = [];
+  resetDots();
+  startBtn.classList.add('hidden');
+  retakeBtn.classList.add('hidden');
+  stripSection.style.display = 'none';
+  startHint.textContent = '';
+  if (state.mode === 'together') send({ type: 'startShooting' });
+
+  for (let i = 0; i < PHOTO_COUNT; i++) {
+    await runCountdown(COUNTDOWN_SEC);
+    triggerFlash();
+    if (state.mode === 'together') { send({ type: 'flash' }); triggerFlashEl(flashPartner); }
+    state.photos.push(captureMyFrame());
+    if (state.mode === 'together') { capturePartnerFrame(i); send({ type: 'capture', index: i }); }
+    setDot(i, true);
+    if (i < PHOTO_COUNT - 1) await sleep(BETWEEN_SHOTS_MS);
+  }
+
+  state.shooting = false;
+  showCountdownBoth(null);
+  retakeBtn.classList.remove('hidden');
+  startHint.textContent = '';
+  await buildStrip();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function send(data) {
+  if (state.conn && state.conn.open) state.conn.send(data);
+}
+
+// ── Build strip ──────────────────────────────────────────
+async function buildStrip() {
+  const caption    = captionInput.value.trim();
+  const showDate   = showDateChk.checked;
+  const theme      = THEMES[state.currentTheme] || THEMES['sakura'];
+  const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
+
+  const PW = isTogether ? TOG_PW : PHOTO_W;
+  const PH = isTogether ? TOG_PH : PHOTO_H;
+  const SW = isTogether ? TOG_SW : STRIP_W;
+
+  const footerH = (caption || showDate) ? 70 : 32;
+  const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
+
+  stripCanvas.width  = SW;
+  stripCanvas.height = totalH;
+
+  const ctx = stripCanvas.getContext('2d');
+
+  // Draw background
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = theme.color || '#ffb7c5';
+  ctx.fillRect(0, 0, SW, totalH);
+  // Draw aesthetic decorations on top (if theme has them)
+  if (typeof theme.draw === 'function') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    try { theme.draw(ctx, SW, totalH); } catch(e) { console.warn('Theme draw error:', e); }
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  // Draw photos with rounded corners
+  for (let i = 0; i < PHOTO_COUNT; i++) {
+    const y = PADDING + i * (PH + PADDING);
+    if (isTogether) {
+      const myImg = await loadImage(state.photos[i]);
+      const ptImg = await loadImage(state.partnerPhotos[i]);
+      drawRoundedImage(ctx, myImg, PADDING, y, PW, PH, 8);
+      drawRoundedImage(ctx, ptImg, PADDING + PW + PADDING, y, PW, PH, 8);
+    } else {
+      const img = await loadImage(state.photos[i]);
+      drawRoundedImage(ctx, img, PADDING, y, PW, PH, 10);
+    }
+  }
+
+  // Footer
+  const textColor = theme.text || '#222';
+  ctx.fillStyle   = textColor;
+  ctx.textAlign   = 'center';
+  const baseY = totalH - footerH + 20;
+
+  if (caption) {
+    ctx.font = `bold 18px 'Nunito', sans-serif`;
+    ctx.fillText(caption, SW / 2, baseY);
+  }
+  if (showDate) {
+    ctx.font = `13px 'Nunito', sans-serif`;
+    ctx.globalAlpha = 0.6;
+    const d = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    ctx.fillText(d, SW / 2, caption ? baseY + 26 : baseY);
+    ctx.globalAlpha = 1;
+  }
+
+  stripSection.style.display = 'flex';
+  stripSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+function drawRoundedImage(ctx, img, x, y, w, h, r) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(img, x, y, w, h);
+  ctx.restore();
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function rebuildIfReady() {
+  if (state.photos.length === PHOTO_COUNT) buildStrip();
+}
+
+captionInput.addEventListener('input', rebuildIfReady);
+showDateChk.addEventListener('change', rebuildIfReady);
+
+// ── Button handlers ──────────────────────────────────────
+startBtn.addEventListener('click', startShooting);
+
+retakeBtn.addEventListener('click', () => {
+  state.photos = []; state.partnerPhotos = [];
+  resetDots();
+  retakeBtn.classList.add('hidden');
+  startBtn.classList.remove('hidden');
+  stripSection.style.display = 'none';
+  startHint.textContent = 'tap the button to start!';
+});
+
+downloadBtn.addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = 'our-photobooth-strip.png';
+  a.href = stripCanvas.toDataURL('image/png');
+  a.click();
+});
+
+newBtn.addEventListener('click', () => {
+  state.photos = []; state.partnerPhotos = [];
+  resetDots();
+  retakeBtn.classList.add('hidden');
+  startBtn.classList.remove('hidden');
+  stripSection.style.display = 'none';
+  captionInput.value = '';
+  startHint.textContent = 'tap the button to start!';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ── Toast ────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ─────────────────────────────────────────────────
+initCamera();
