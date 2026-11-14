@@ -286,13 +286,43 @@ function runCountdown(sec) {
 
 // ── Capture ──────────────────────────────────────────────
 function captureMyFrame() {
-  const ctx = captureCanvas.getContext('2d');
-  ctx.save(); ctx.translate(PHOTO_W, 0); ctx.scale(-1, 1);
-  ctx.filter = state.currentFilter === 'none' ? 'none' : state.currentFilter;
-  ctx.drawImage(state.mode === 'together' ? videoMe : video, 0, 0, PHOTO_W, PHOTO_H);
-  ctx.restore();
-  // Lower quality for mobile compatibility (0.85 instead of 0.92)
-  return captureCanvas.toDataURL('image/jpeg', 0.85);
+  try {
+    const sourceVideo = state.mode === 'together' ? videoMe : video;
+    
+    // Check if video is ready
+    if (!sourceVideo || sourceVideo.readyState < 2) {
+      console.error('Video not ready:', sourceVideo ? sourceVideo.readyState : 'no video');
+      throw new Error('Video not ready for capture');
+    }
+    
+    const ctx = captureCanvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get capture canvas context');
+    }
+    
+    // Clear canvas first
+    ctx.clearRect(0, 0, PHOTO_W, PHOTO_H);
+    
+    ctx.save(); 
+    ctx.translate(PHOTO_W, 0); 
+    ctx.scale(-1, 1);
+    ctx.filter = state.currentFilter === 'none' ? 'none' : state.currentFilter;
+    ctx.drawImage(sourceVideo, 0, 0, PHOTO_W, PHOTO_H);
+    ctx.restore();
+    
+    // Lower quality for mobile compatibility (0.85 instead of 0.92)
+    const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.85);
+    
+    if (!dataUrl || dataUrl === 'data:,') {
+      throw new Error('Failed to create image data');
+    }
+    
+    console.log('Frame captured successfully, size:', dataUrl.length);
+    return dataUrl;
+  } catch (err) {
+    console.error('Error in captureMyFrame:', err);
+    throw err;
+  }
 }
 
 function capturePartnerFrame(index) {
@@ -316,15 +346,24 @@ async function startShooting() {
   startHint.textContent = '';
   if (state.mode === 'together') send({ type: 'startShooting' });
 
+  console.log('Starting photo shoot...');
+
   for (let i = 0; i < PHOTO_COUNT; i++) {
     await runCountdown(COUNTDOWN_SEC);
     triggerFlash();
     if (state.mode === 'together') { send({ type: 'flash' }); triggerFlashEl(flashPartner); }
-    state.photos.push(captureMyFrame());
+    
+    const photo = captureMyFrame();
+    console.log('Photo', i+1, 'captured, length:', photo.length, 'starts with:', photo.substring(0, 30));
+    state.photos.push(photo);
+    
     if (state.mode === 'together') { capturePartnerFrame(i); send({ type: 'capture', index: i }); }
     setDot(i, true);
     if (i < PHOTO_COUNT - 1) await sleep(BETWEEN_SHOTS_MS);
   }
+
+  console.log('All photos captured:', state.photos.length, 'photos');
+  console.log('Photo array check:', state.photos.map((p, i) => `Photo ${i}: ${p ? 'exists' : 'MISSING'}`));
 
   state.shooting = false;
   showCountdownBoth(null);
@@ -492,6 +531,13 @@ async function buildStrip() {
 // ── Build simple strip (fallback without theme decorations) ──
 async function buildSimpleStrip() {
   console.log('buildSimpleStrip() called - no theme decorations');
+  console.log('Photos in state:', state.photos.length);
+  
+  // First, test if canvas works at all
+  const ctx = stripCanvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Cannot get canvas context');
+  }
   
   const caption    = captionInput.value.trim();
   const showDate   = showDateChk.checked;
@@ -505,26 +551,52 @@ async function buildSimpleStrip() {
   const footerH = (caption || showDate) ? 70 : 32;
   const totalH  = PADDING + PHOTO_COUNT * (PH + PADDING) + footerH;
 
+  console.log('Setting canvas size:', SW, 'x', totalH);
   stripCanvas.width  = SW;
   stripCanvas.height = totalH;
 
-  const ctx = stripCanvas.getContext('2d');
+  // Test: Draw a red rectangle to confirm canvas is working
+  ctx.fillStyle = 'red';
+  ctx.fillRect(0, 0, 50, 50);
+  console.log('Test red square drawn');
 
-  // Simple solid background only
+  // Simple solid background
   ctx.fillStyle = theme.color || '#ffb7c5';
   ctx.fillRect(0, 0, SW, totalH);
+  console.log('Background filled');
 
   // Draw photos - NO rounded corners, just simple rectangles
   for (let i = 0; i < PHOTO_COUNT; i++) {
     const y = PADDING + i * (PH + PADDING);
-    if (isTogether) {
-      const myImg = await loadImage(state.photos[i]);
-      const ptImg = await loadImage(state.partnerPhotos[i]);
-      ctx.drawImage(myImg, PADDING, y, PW, PH);
-      ctx.drawImage(ptImg, PADDING + PW + PADDING, y, PW, PH);
-    } else {
-      const img = await loadImage(state.photos[i]);
-      ctx.drawImage(img, PADDING, y, PW, PH);
+    console.log('Drawing photo', i+1, 'at y:', y);
+    
+    try {
+      if (isTogether) {
+        console.log('Together mode - loading 2 images');
+        const myImg = await loadImage(state.photos[i]);
+        const ptImg = await loadImage(state.partnerPhotos[i]);
+        console.log('Images loaded, drawing...');
+        ctx.drawImage(myImg, PADDING, y, PW, PH);
+        ctx.drawImage(ptImg, PADDING + PW + PADDING, y, PW, PH);
+      } else {
+        console.log('Solo mode - loading 1 image, data length:', state.photos[i] ? state.photos[i].length : 'NULL');
+        if (!state.photos[i]) {
+          throw new Error(`Photo ${i} is null or undefined`);
+        }
+        const img = await loadImage(state.photos[i]);
+        console.log('Image loaded, width:', img.width, 'height:', img.height);
+        ctx.drawImage(img, PADDING, y, PW, PH);
+        console.log('Image drawn to canvas');
+      }
+    } catch (imgErr) {
+      console.error('Failed to draw photo', i, ':', imgErr);
+      // Draw error placeholder
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(PADDING, y, PW, PH);
+      ctx.fillStyle = '#fff';
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Error', PADDING + PW/2, y + PH/2);
     }
   }
 
@@ -543,6 +615,7 @@ async function buildSimpleStrip() {
     ctx.fillText(d, SW / 2, caption ? baseY + 26 : baseY);
   }
 
+  console.log('Making strip visible...');
   stripSection.style.display = 'flex';
   await new Promise(resolve => setTimeout(resolve, 100));
   stripSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
