@@ -818,14 +818,366 @@ async function startShooting() {
           ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
-      'forest-moss': { color: '#dcfce7' },
-      'galaxy': { color: '#0d0630' },
-      'retro-film': { color: '#f0e8d0' },
-      'y2k-holo': { color: '#ffe0f7' },
-      'dark-academia': { color: '#2d1e0a' },
-      'winter-snow': { color: '#e0f2fe' },
-      'velvet-night': { color: '#0a0014' },
-      'pastel-candy': { color: '#fff0f8' }
+      'forest-moss': { 
+        color: '#dcfce7',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#f0fdf4');
+          g.addColorStop(0.4, '#dcfce7');
+          g.addColorStop(1, '#86efac');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 14; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 22 + i * 8;
+            const gg = ctx.createRadialGradient(x, y, 0, x, y, size);
+            gg.addColorStop(0, 'rgba(255,255,220,0.22)');
+            gg.addColorStop(1, 'rgba(255,255,220,0)');
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          }
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 4) * 5;
+            ctx.fillStyle = '#4ade80';
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.ellipse(x, y, size, size * 0.5, (i % 8) * Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(22,163,74,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'galaxy': { 
+        color: '#0d0630',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#02011a');
+          g.addColorStop(0.4, '#0d0630');
+          g.addColorStop(1, '#1a0545');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          [{x:0.3,y:0.35,c:'rgba(80,0,160,0.28)'}, {x:0.7,y:0.6,c:'rgba(0,80,200,0.2)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, w*0.48);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 180; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.3 + (i % 5) * 0.3;
+            ctx.globalAlpha = 0.2 + (i % 7) * 0.11;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 15; i++) {
+            const x = (i * 97.3) % w;
+            const y = (i * 0.432 * h) % h;
+            const size = 6 + (i % 3) * 4;
+            ctx.fillStyle = '#e0d7ff';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(x - size, y - 1, size * 2, 2);
+            ctx.fillRect(x - 1, y - size, 2, size * 2);
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(160,100,255,0.5)');
+          borderG.addColorStop(1, 'rgba(60,0,200,0.5)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'retro-film': { 
+        color: '#f0e8d0',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#f5efe0');
+          g.addColorStop(1, '#e8d8b0');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.85);
+          vig.addColorStop(0, 'rgba(139,100,40,0)');
+          vig.addColorStop(1, 'rgba(80,40,0,0.35)');
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(160,120,60,0.35)';
+          for (let y = 24; y < h - 24; y += 32) {
+            ctx.fillRect(5, y, 11, 18);
+            ctx.fillRect(w - 16, y, 11, 18);
+          }
+          ctx.globalAlpha = 0.15;
+          for (let i = 0; i < 200; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 1 + (i % 3) * 0.5;
+            ctx.fillStyle = '#8b6a3a';
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(139,106,58,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'y2k-holo': { 
+        color: '#ffe0f7',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#ffe0f7');
+          g.addColorStop(0.3, '#d0f0ff');
+          g.addColorStop(0.6, '#e8d0ff');
+          g.addColorStop(1, '#ffd0e8');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 12; i++) {
+            const hue = i * 30;
+            const gg = ctx.createLinearGradient(0, i * h / 12, w, (i + 1) * h / 12);
+            gg.addColorStop(0, `hsla(${hue},100%,80%,0)`);
+            gg.addColorStop(0.5, `hsla(${hue},100%,80%,0.12)`);
+            gg.addColorStop(1, `hsla(${hue},100%,80%,0)`);
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          }
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 7 + (i % 4) * 4;
+            const hue = (i * 60) % 360;
+            ctx.fillStyle = `hsl(${hue},100%,70%)`;
+            ctx.globalAlpha = 0.5;
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.35;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              ctx.beginPath();
+              ctx.arc(px, py, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(255,100,200,0.6)');
+          borderG.addColorStop(0.5, 'rgba(100,200,255,0.6)');
+          borderG.addColorStop(1, 'rgba(200,100,255,0.6)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'dark-academia': { 
+        color: '#2d1e0a',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#1a1208');
+          g.addColorStop(0.5, '#2d1e0a');
+          g.addColorStop(1, '#1a0f05');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.8);
+          vig.addColorStop(0, 'rgba(80,50,10,0)');
+          vig.addColorStop(1, 'rgba(10,5,0,0.5)');
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'rgba(200,160,80,0.35)';
+          ctx.lineWidth = 1.5;
+          for (let x = 16; x < w - 16; x += 22) {
+            ctx.beginPath();
+            ctx.moveTo(x, 14);
+            ctx.lineTo(x + 10, 26);
+            ctx.lineTo(x, 38);
+            ctx.lineTo(x - 10, 26);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, h - 38);
+            ctx.lineTo(x + 10, h - 26);
+            ctx.lineTo(x, h - 14);
+            ctx.lineTo(x - 10, h - 26);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          for (let y = 60; y < h - 60; y += 40) {
+            ctx.beginPath();
+            ctx.arc(20, y, 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(w - 20, y, 5, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.strokeStyle = 'rgba(200,160,80,0.4)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'winter-snow': { 
+        color: '#e0f2fe',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#e0f2fe');
+          g.addColorStop(0.5, '#f0f9ff');
+          g.addColorStop(1, '#bae6fd');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const shimmer = ctx.createRadialGradient(w * 0.5, 0, 0, w * 0.5, 0, w * 0.75);
+          shimmer.addColorStop(0, 'rgba(255,255,255,0.3)');
+          shimmer.addColorStop(1, 'rgba(200,230,255,0)');
+          ctx.fillStyle = shimmer;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 35; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 6 + (i % 4) * 4;
+            ctx.strokeStyle = '#93c5fd';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.4 + (i % 3) * 0.15;
+            for (let a = 0; a < 6; a++) {
+              const angle = (Math.PI / 3) * a;
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
+              ctx.stroke();
+              const bx = x + Math.cos(angle) * size * 0.6;
+              const by = y + Math.sin(angle) * size * 0.6;
+              ctx.beginPath();
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + Math.cos(angle + Math.PI / 6) * size * 0.3, by + Math.sin(angle + Math.PI / 6) * size * 0.3);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + Math.cos(angle - Math.PI / 6) * size * 0.3, by + Math.sin(angle - Math.PI / 6) * size * 0.3);
+              ctx.stroke();
+            }
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 60; i++) {
+            const x = (i * 97.3) % w;
+            const y = (i * 0.432 * h) % h;
+            const size = 1 + (i % 4) * 1.2;
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.5 + (i % 4) * 0.12;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(56,189,248,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'velvet-night': { 
+        color: '#0a0014',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#0a0014');
+          g.addColorStop(0.4, '#1a0030');
+          g.addColorStop(1, '#0a0014');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const glow = ctx.createRadialGradient(w * 0.5, h * 0.3, 0, w * 0.5, h * 0.3, w * 0.85);
+          glow.addColorStop(0, 'rgba(80,0,120,0.45)');
+          glow.addColorStop(0.6, 'rgba(40,0,80,0.25)');
+          glow.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 150; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.4 + (i % 5) * 0.35;
+            ctx.globalAlpha = 0.25 + (i % 6) * 0.12;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 5;
+            ctx.fillStyle = '#d8b4fe';
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.35;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              if (p === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(192,132,252,0.55)');
+          borderG.addColorStop(1, 'rgba(80,0,160,0.55)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'pastel-candy': { 
+        color: '#fff0f8',
+        draw: (ctx, w, h) => {
+          ctx.fillStyle = '#fff0f8';
+          ctx.fillRect(0, 0, w, h);
+          const stripes = ['rgba(255,183,197,0.35)', 'rgba(183,220,255,0.35)', 'rgba(183,255,210,0.35)', 'rgba(255,225,183,0.35)', 'rgba(220,183,255,0.35)'];
+          for (let i = 0; i < 24; i++) {
+            ctx.fillStyle = stripes[i % stripes.length];
+            const x = -h + i * (w + h) / 12;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + (w + h) / 12, 0);
+            ctx.lineTo(x + (w + h) / 12 + h, h);
+            ctx.lineTo(x + h, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 30; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 4;
+            const hue = (i * 40 + i * 70) % 360;
+            ctx.fillStyle = `hsl(${hue},100%,72%)`;
+            ctx.globalAlpha = 0.55;
+            ctx.beginPath();
+            ctx.arc(x - size * 0.25, y, size * 0.25, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.25, y, size * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.5, y);
+            ctx.lineTo(x, y + size * 0.5);
+            ctx.lineTo(x + size * 0.5, y);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(255,100,150,0.5)');
+          borderG.addColorStop(0.5, 'rgba(100,150,255,0.5)');
+          borderG.addColorStop(1, 'rgba(255,150,100,0.5)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      }
     };
     
     const theme = themes[state.currentTheme] || themes['sakura'];
@@ -1195,38 +1547,171 @@ function rebuildIfReady() {
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, w, h);
           g.addColorStop(0, '#fff0f5');
-          g.addColorStop(0.5, '#ffd6e7');
+          g.addColorStop(0.4, '#ffd6e7');
           g.addColorStop(1, '#ffb7c5');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
-          ctx.fillStyle = 'rgba(255,77,136,0.15)';
-          for (let i = 0; i < 20; i++) {
-            const x = (i * 137.5) % w;
-            const y = (i * 61.8) % h;
-            const size = 8 + (i % 3) * 4;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
+          const glow = ctx.createRadialGradient(w*0.3, h*0.2, 0, w*0.3, h*0.2, w*0.6);
+          glow.addColorStop(0, 'rgba(255,200,220,0.3)');
+          glow.addColorStop(1, 'rgba(255,200,220,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(255,77,136,0.25)';
+          for (let i = 0; i < 35; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 12 + (i % 4) * 6;
+            for (let p = 0; p < 5; p++) {
+              const angle = (Math.PI * 2 / 5) * p;
+              ctx.beginPath();
+              ctx.ellipse(x + Math.cos(angle) * size * 0.5, y + Math.sin(angle) * size * 0.5, 
+                          size * 0.35, size * 0.2, angle, 0, Math.PI * 2);
+              ctx.fill();
+            }
           }
+          ctx.strokeStyle = 'rgba(255,77,136,0.4)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(255,77,136,0.2)';
+          ctx.strokeRect(14, 14, w - 28, h - 28);
         }
       },
-      'midnight-rose': { color: '#2a0018' },
-      'cottagecore': { color: '#fde8c8' },
+      'midnight-rose': { 
+        color: '#2a0018',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#1a0010');
+          g.addColorStop(0.5, '#3d0030');
+          g.addColorStop(1, '#1a001a');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          [{x:0.2, y:0.2, r:0.4}, {x:0.8, y:0.65, r:0.45}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, o.r*w);
+            gl.addColorStop(0, 'rgba(180,0,80,0.18)');
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          ctx.fillStyle = 'rgba(204,0,60,0.35)';
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 18 + (i % 3) * 8;
+            for (let r = 0; r < 3; r++) {
+              ctx.beginPath();
+              ctx.arc(x, y, size - r * 6, 0, Math.PI * 2);
+              ctx.globalAlpha = 0.15 - r * 0.03;
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
+          ctx.strokeStyle = 'rgba(204,0,60,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'cottagecore': { 
+        color: '#fde8c8',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#fffbf0');
+          g.addColorStop(0.5, '#fde8c8');
+          g.addColorStop(1, '#f5d0a0');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalAlpha = 0.04;
+          ctx.strokeStyle = '#c8a87a';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < w; i += 4) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, h);
+            ctx.stroke();
+          }
+          for (let i = 0; i < h; i += 4) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(w, i);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          const colors = ['#e8765a', '#d45a3a', '#f29070'];
+          for (let i = 0; i < 28; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 14 + (i % 3) * 6;
+            const col = colors[i % 3];
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.4;
+            for (let p = 0; p < 6; p++) {
+              const angle = (Math.PI * 2 / 6) * p;
+              ctx.beginPath();
+              ctx.arc(x + Math.cos(angle) * size * 0.4, y + Math.sin(angle) * size * 0.4, size * 0.3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          }
+          ctx.strokeStyle = 'rgba(200,120,58,0.5)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+          const corner = 25;
+          ctx.lineWidth = 2;
+          [[8,8], [w-8,8], [8,h-8], [w-8,h-8]].forEach(([cx, cy]) => {
+            const xDir = cx < w/2 ? 1 : -1;
+            const yDir = cy < h/2 ? 1 : -1;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + yDir * corner);
+            ctx.lineTo(cx, cy);
+            ctx.lineTo(cx + xDir * corner, cy);
+            ctx.stroke();
+          });
+        }
+      },
       'aurora': { 
         color: '#050a14',
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#050a14');
-          g.addColorStop(0.5, '#08122a');
+          g.addColorStop(0.4, '#08122a');
           g.addColorStop(1, '#050a14');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
-          ctx.fillStyle = 'rgba(255,255,255,0.4)';
-          for (let i = 0; i < 40; i++) {
-            const x = (i * 137.5) % w;
-            const y = (i * 61.8) % h;
-            ctx.fillRect(x, y, 1, 1);
+          [
+            {color: 'rgba(0,255,180,0.2)', y: 0.15},
+            {color: 'rgba(60,80,255,0.18)', y: 0.35},
+            {color: 'rgba(0,200,255,0.2)', y: 0.58},
+            {color: 'rgba(160,0,255,0.16)', y: 0.78}
+          ].forEach(band => {
+            const gg = ctx.createLinearGradient(0, band.y * h - 60, 0, band.y * h + 60);
+            gg.addColorStop(0, 'rgba(0,0,0,0)');
+            gg.addColorStop(0.5, band.color);
+            gg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          });
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 120; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.5 + (i % 4) * 0.4;
+            ctx.globalAlpha = 0.3 + (i % 5) * 0.14;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
           }
+          ctx.globalAlpha = 1;
+          const borderGrad = ctx.createLinearGradient(0, 0, w, h);
+          borderGrad.addColorStop(0, 'rgba(0,255,180,0.5)');
+          borderGrad.addColorStop(0.5, 'rgba(80,120,255,0.5)');
+          borderGrad.addColorStop(1, 'rgba(160,0,255,0.5)');
+          ctx.strokeStyle = borderGrad;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
       'golden-hour': { 
@@ -1234,33 +1719,533 @@ function rebuildIfReady() {
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#ff6b35');
-          g.addColorStop(0.5, '#ff9f1c');
+          g.addColorStop(0.35, '#ff9f1c');
+          g.addColorStop(0.7, '#ffcb47');
           g.addColorStop(1, '#ffe08a');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
+          const sun = ctx.createRadialGradient(w * 0.5, -h * 0.1, 0, w * 0.5, -h * 0.1, w * 0.75);
+          sun.addColorStop(0, 'rgba(255,245,180,0.5)');
+          sun.addColorStop(0.5, 'rgba(255,200,60,0.15)');
+          sun.addColorStop(1, 'rgba(255,140,0,0)');
+          ctx.fillStyle = sun;
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalAlpha = 0.08;
+          ctx.strokeStyle = '#fff9e0';
+          ctx.lineWidth = 3;
+          for (let a = 0; a < 12; a++) {
+            const angle = (a / 12) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.5, 0);
+            ctx.lineTo(w * 0.5 + Math.cos(angle) * w * 1.5, Math.sin(angle) * h * 1.5);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 5) * 7;
+            ctx.strokeStyle = 'rgba(255,249,204,0.15)';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.08 + (i % 4) * 0.02;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(255,107,53,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
-      'lavender-dream': { color: '#e9d5ff' },
-      'neon-cyber': { color: '#03001e' },
+      'lavender-dream': { 
+        color: '#e9d5ff',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#f3e8ff');
+          g.addColorStop(0.5, '#e9d5ff');
+          g.addColorStop(1, '#c4b5fd');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          [{x:0.2,y:0.25,r:0.45,c:'rgba(167,139,250,0.2)'}, {x:0.8,y:0.7,r:0.5,c:'rgba(192,132,252,0.18)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, o.r*w);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          for (let i = 0; i < 30; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 6 + (i % 4) * 5;
+            ctx.fillStyle = '#8b5cf6';
+            ctx.globalAlpha = 0.35 + (i % 3) * 0.15;
+            ctx.beginPath();
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.4;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              if (p === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(139,92,246,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'neon-cyber': { 
+        color: '#03001e',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#03001e');
+          g.addColorStop(0.5, '#0a0030');
+          g.addColorStop(1, '#03001e');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'rgba(0,255,224,0.12)';
+          ctx.lineWidth = 0.5;
+          for (let x = 0; x < w; x += 25) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+          }
+          for (let y = 0; y < h; y += 25) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+          }
+          [{x:0.2,y:0.25,c:'rgba(0,255,224,0.15)'}, {x:0.85,y:0.75,c:'rgba(255,0,128,0.15)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, w*0.4);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          const colors = ['#00ffe0', '#ff0080', '#7700ff'];
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 5 + (i % 4) * 4;
+            const col = colors[i % 3];
+            ctx.fillStyle = col;
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.moveTo(x, y - size);
+            ctx.lineTo(x + size * 0.6, y);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x - size * 0.6, y);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(0,255,224,0.7)');
+          borderG.addColorStop(0.5, 'rgba(255,0,128,0.7)');
+          borderG.addColorStop(1, 'rgba(119,0,255,0.7)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
       'blue-sky': { 
         color: '#bae6fd',
         draw: (ctx, w, h) => {
           const g = ctx.createLinearGradient(0, 0, 0, h);
           g.addColorStop(0, '#bae6fd');
-          g.addColorStop(0.7, '#7dd3fc');
+          g.addColorStop(0.6, '#7dd3fc');
           g.addColorStop(1, '#38bdf8');
           ctx.fillStyle = g;
           ctx.fillRect(0, 0, w, h);
+          const sun = ctx.createRadialGradient(w * 0.8, h * 0.08, 0, w * 0.8, h * 0.08, 70);
+          sun.addColorStop(0, 'rgba(255,245,150,0.95)');
+          sun.addColorStop(0.4, 'rgba(255,220,80,0.3)');
+          sun.addColorStop(1, 'rgba(255,180,0,0)');
+          ctx.fillStyle = sun;
+          ctx.fillRect(0, 0, w, h);
+          const clouds = [[0.15,0.12,28], [0.55,0.08,24], [0.35,0.22,36], [0.75,0.18,20], 
+                          [0.12,0.38,30], [0.88,0.45,26], [0.25,0.65,28], [0.7,0.7,24]];
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          clouds.forEach(([xf, yf, r]) => {
+            const cx = xf * w;
+            const cy = yf * h;
+            [[-r*0.5,r*0.1], [0,-r*0.1], [r*0.5,r*0.1], [r*0.9,r*0.2], [-r*0.9,r*0.2], [0,r*0.25]].forEach(([dx, dy]) => {
+              ctx.beginPath();
+              ctx.arc(cx + dx, cy + dy, r * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          });
+          ctx.strokeStyle = 'rgba(14,165,233,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
         }
       },
-      'forest-moss': { color: '#dcfce7' },
-      'galaxy': { color: '#0d0630' },
-      'retro-film': { color: '#f0e8d0' },
-      'y2k-holo': { color: '#ffe0f7' },
-      'dark-academia': { color: '#2d1e0a' },
-      'winter-snow': { color: '#e0f2fe' },
-      'velvet-night': { color: '#0a0014' },
-      'pastel-candy': { color: '#fff0f8' }
+      'forest-moss': { 
+        color: '#dcfce7',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#f0fdf4');
+          g.addColorStop(0.4, '#dcfce7');
+          g.addColorStop(1, '#86efac');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 14; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 22 + i * 8;
+            const gg = ctx.createRadialGradient(x, y, 0, x, y, size);
+            gg.addColorStop(0, 'rgba(255,255,220,0.22)');
+            gg.addColorStop(1, 'rgba(255,255,220,0)');
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          }
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 4) * 5;
+            ctx.fillStyle = '#4ade80';
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.ellipse(x, y, size, size * 0.5, (i % 8) * Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(22,163,74,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'galaxy': { 
+        color: '#0d0630',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#02011a');
+          g.addColorStop(0.4, '#0d0630');
+          g.addColorStop(1, '#1a0545');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          [{x:0.3,y:0.35,c:'rgba(80,0,160,0.28)'}, {x:0.7,y:0.6,c:'rgba(0,80,200,0.2)'}].forEach(o => {
+            const gl = ctx.createRadialGradient(o.x*w, o.y*h, 0, o.x*w, o.y*h, w*0.48);
+            gl.addColorStop(0, o.c);
+            gl.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, w, h);
+          });
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 180; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.3 + (i % 5) * 0.3;
+            ctx.globalAlpha = 0.2 + (i % 7) * 0.11;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 15; i++) {
+            const x = (i * 97.3) % w;
+            const y = (i * 0.432 * h) % h;
+            const size = 6 + (i % 3) * 4;
+            ctx.fillStyle = '#e0d7ff';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(x - size, y - 1, size * 2, 2);
+            ctx.fillRect(x - 1, y - size, 2, size * 2);
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(160,100,255,0.5)');
+          borderG.addColorStop(1, 'rgba(60,0,200,0.5)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'retro-film': { 
+        color: '#f0e8d0',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#f5efe0');
+          g.addColorStop(1, '#e8d8b0');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.85);
+          vig.addColorStop(0, 'rgba(139,100,40,0)');
+          vig.addColorStop(1, 'rgba(80,40,0,0.35)');
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(160,120,60,0.35)';
+          for (let y = 24; y < h - 24; y += 32) {
+            ctx.fillRect(5, y, 11, 18);
+            ctx.fillRect(w - 16, y, 11, 18);
+          }
+          ctx.globalAlpha = 0.15;
+          for (let i = 0; i < 200; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 1 + (i % 3) * 0.5;
+            ctx.fillStyle = '#8b6a3a';
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(139,106,58,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'y2k-holo': { 
+        color: '#ffe0f7',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#ffe0f7');
+          g.addColorStop(0.3, '#d0f0ff');
+          g.addColorStop(0.6, '#e8d0ff');
+          g.addColorStop(1, '#ffd0e8');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 12; i++) {
+            const hue = i * 30;
+            const gg = ctx.createLinearGradient(0, i * h / 12, w, (i + 1) * h / 12);
+            gg.addColorStop(0, `hsla(${hue},100%,80%,0)`);
+            gg.addColorStop(0.5, `hsla(${hue},100%,80%,0.12)`);
+            gg.addColorStop(1, `hsla(${hue},100%,80%,0)`);
+            ctx.fillStyle = gg;
+            ctx.fillRect(0, 0, w, h);
+          }
+          for (let i = 0; i < 25; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 7 + (i % 4) * 4;
+            const hue = (i * 60) % 360;
+            ctx.fillStyle = `hsl(${hue},100%,70%)`;
+            ctx.globalAlpha = 0.5;
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.35;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              ctx.beginPath();
+              ctx.arc(px, py, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(255,100,200,0.6)');
+          borderG.addColorStop(0.5, 'rgba(100,200,255,0.6)');
+          borderG.addColorStop(1, 'rgba(200,100,255,0.6)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'dark-academia': { 
+        color: '#2d1e0a',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#1a1208');
+          g.addColorStop(0.5, '#2d1e0a');
+          g.addColorStop(1, '#1a0f05');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.8);
+          vig.addColorStop(0, 'rgba(80,50,10,0)');
+          vig.addColorStop(1, 'rgba(10,5,0,0.5)');
+          ctx.fillStyle = vig;
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'rgba(200,160,80,0.35)';
+          ctx.lineWidth = 1.5;
+          for (let x = 16; x < w - 16; x += 22) {
+            ctx.beginPath();
+            ctx.moveTo(x, 14);
+            ctx.lineTo(x + 10, 26);
+            ctx.lineTo(x, 38);
+            ctx.lineTo(x - 10, 26);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, h - 38);
+            ctx.lineTo(x + 10, h - 26);
+            ctx.lineTo(x, h - 14);
+            ctx.lineTo(x - 10, h - 26);
+            ctx.closePath();
+            ctx.stroke();
+          }
+          for (let y = 60; y < h - 60; y += 40) {
+            ctx.beginPath();
+            ctx.arc(20, y, 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(w - 20, y, 5, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.strokeStyle = 'rgba(200,160,80,0.4)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'winter-snow': { 
+        color: '#e0f2fe',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#e0f2fe');
+          g.addColorStop(0.5, '#f0f9ff');
+          g.addColorStop(1, '#bae6fd');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const shimmer = ctx.createRadialGradient(w * 0.5, 0, 0, w * 0.5, 0, w * 0.75);
+          shimmer.addColorStop(0, 'rgba(255,255,255,0.3)');
+          shimmer.addColorStop(1, 'rgba(200,230,255,0)');
+          ctx.fillStyle = shimmer;
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 35; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 6 + (i % 4) * 4;
+            ctx.strokeStyle = '#93c5fd';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.4 + (i % 3) * 0.15;
+            for (let a = 0; a < 6; a++) {
+              const angle = (Math.PI / 3) * a;
+              ctx.beginPath();
+              ctx.moveTo(x, y);
+              ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
+              ctx.stroke();
+              const bx = x + Math.cos(angle) * size * 0.6;
+              const by = y + Math.sin(angle) * size * 0.6;
+              ctx.beginPath();
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + Math.cos(angle + Math.PI / 6) * size * 0.3, by + Math.sin(angle + Math.PI / 6) * size * 0.3);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(bx, by);
+              ctx.lineTo(bx + Math.cos(angle - Math.PI / 6) * size * 0.3, by + Math.sin(angle - Math.PI / 6) * size * 0.3);
+              ctx.stroke();
+            }
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 60; i++) {
+            const x = (i * 97.3) % w;
+            const y = (i * 0.432 * h) % h;
+            const size = 1 + (i % 4) * 1.2;
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.5 + (i % 4) * 0.12;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = 'rgba(56,189,248,0.5)';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'velvet-night': { 
+        color: '#0a0014',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#0a0014');
+          g.addColorStop(0.4, '#1a0030');
+          g.addColorStop(1, '#0a0014');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          const glow = ctx.createRadialGradient(w * 0.5, h * 0.3, 0, w * 0.5, h * 0.3, w * 0.85);
+          glow.addColorStop(0, 'rgba(80,0,120,0.45)');
+          glow.addColorStop(0.6, 'rgba(40,0,80,0.25)');
+          glow.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = glow;
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#fff';
+          for (let i = 0; i < 150; i++) {
+            const x = (i * 137.508) % w;
+            const y = (i * 0.618 * h) % h;
+            const size = 0.4 + (i % 5) * 0.35;
+            ctx.globalAlpha = 0.25 + (i % 6) * 0.12;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 5;
+            ctx.fillStyle = '#d8b4fe';
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            for (let p = 0; p < 8; p++) {
+              const angle = (Math.PI / 4) * p;
+              const r = p % 2 === 0 ? size : size * 0.35;
+              const px = x + Math.cos(angle) * r;
+              const py = y + Math.sin(angle) * r;
+              if (p === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(192,132,252,0.55)');
+          borderG.addColorStop(1, 'rgba(80,0,160,0.55)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      },
+      'pastel-candy': { 
+        color: '#fff0f8',
+        draw: (ctx, w, h) => {
+          ctx.fillStyle = '#fff0f8';
+          ctx.fillRect(0, 0, w, h);
+          const stripes = ['rgba(255,183,197,0.35)', 'rgba(183,220,255,0.35)', 'rgba(183,255,210,0.35)', 'rgba(255,225,183,0.35)', 'rgba(220,183,255,0.35)'];
+          for (let i = 0; i < 24; i++) {
+            ctx.fillStyle = stripes[i % stripes.length];
+            const x = -h + i * (w + h) / 12;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + (w + h) / 12, 0);
+            ctx.lineTo(x + (w + h) / 12 + h, h);
+            ctx.lineTo(x + h, h);
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 30; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 4;
+            const hue = (i * 40 + i * 70) % 360;
+            ctx.fillStyle = `hsl(${hue},100%,72%)`;
+            ctx.globalAlpha = 0.55;
+            ctx.beginPath();
+            ctx.arc(x - size * 0.25, y, size * 0.25, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.25, y, size * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.5, y);
+            ctx.lineTo(x, y + size * 0.5);
+            ctx.lineTo(x + size * 0.5, y);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          const borderG = ctx.createLinearGradient(0, 0, w, h);
+          borderG.addColorStop(0, 'rgba(255,100,150,0.5)');
+          borderG.addColorStop(0.5, 'rgba(100,150,255,0.5)');
+          borderG.addColorStop(1, 'rgba(255,150,100,0.5)');
+          ctx.strokeStyle = borderG;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(8, 8, w - 16, h - 16);
+        }
+      }
     };
     
     const theme = themes[state.currentTheme] || themes['sakura'];
