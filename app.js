@@ -59,6 +59,7 @@ const state = {
   photos: [], partnerPhotos: [],
   currentFilter: 'none',
   currentTheme: 'sakura',
+  textColor: '#000000',  // Default black text
   shooting: false,
   peer: null, conn: null,
   isHost: false, partnerReady: false, roomCode: null,
@@ -162,6 +163,22 @@ function applyVideoFilter(f) {
   video.style.filter   = val;
   videoMe.style.filter = val;
 }
+
+// ── Color picker ─────────────────────────────────────────
+document.querySelectorAll('.color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.textColor = btn.dataset.color;
+    rebuildIfReady();
+  });
+});
+
+document.getElementById('customColorPicker').addEventListener('input', (e) => {
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  state.textColor = e.target.value;
+  rebuildIfReady();
+});
 
 // ── PeerJS ───────────────────────────────────────────────
 function generateCode() {
@@ -1309,17 +1326,17 @@ async function startShooting() {
     console.log('Step 5: Draw text');
     // Footer text
     if (caption || showDate) {
-      ctx.fillStyle = '#222';
+      ctx.fillStyle = state.textColor;
       ctx.textAlign = 'center';
       const baseY = stripH - 80;
       const centerX = SW / 2;  // Use dynamic center based on strip width
       
       if (caption) {
-        ctx.font = 'bold 28px sans-serif';
+        ctx.font = 'bold 28px "Dancing Script", cursive';
         ctx.fillText(caption, centerX, baseY);
       }
       if (showDate) {
-        ctx.font = '20px sans-serif';
+        ctx.font = '20px "Nunito", sans-serif';
         const d = new Date().toLocaleDateString();
         ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
       }
@@ -2369,17 +2386,17 @@ function rebuildIfReady() {
             ctx.drawImage(ptImg, 40 + PW + 40, y, PW, PH);
             // Draw text on last photo
             if (i === 3 && (caption || showDate)) {
-              ctx.fillStyle = '#222';
+              ctx.fillStyle = state.textColor;
               ctx.textAlign = 'center';
               const baseY = stripH - 80;
               const centerX = SW / 2;
               
               if (caption) {
-                ctx.font = 'bold 28px sans-serif';
+                ctx.font = 'bold 28px "Dancing Script", cursive';
                 ctx.fillText(caption, centerX, baseY);
               }
               if (showDate) {
-                ctx.font = '20px sans-serif';
+                ctx.font = '20px "Nunito", sans-serif';
                 const d = new Date().toLocaleDateString();
                 ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
               }
@@ -2391,17 +2408,17 @@ function rebuildIfReady() {
           ctx.drawImage(img, 40, y, PW, PH);
           // Draw text on last photo
           if (i === 3 && (caption || showDate)) {
-            ctx.fillStyle = '#222';
+            ctx.fillStyle = state.textColor;
             ctx.textAlign = 'center';
             const baseY = stripH - 80;
             const centerX = SW / 2;
             
             if (caption) {
-              ctx.font = 'bold 28px sans-serif';
+              ctx.font = 'bold 28px "Dancing Script", cursive';
               ctx.fillText(caption, centerX, baseY);
             }
             if (showDate) {
-              ctx.font = '20px sans-serif';
+              ctx.font = '20px "Nunito", sans-serif';
               const d = new Date().toLocaleDateString();
               ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
             }

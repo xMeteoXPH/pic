@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>💕 Our Photo Booth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Pacifico&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -131,6 +131,24 @@
       <div class="control-group">
         <label class="ctrl-label">✦ Caption</label>
         <input type="text" id="captionInput" placeholder="write something cute here ♡" maxlength="40" />
+      </div>
+
+      <!-- Text Color Picker -->
+      <div class="control-group">
+        <label class="ctrl-label">✦ Text Color</label>
+        <div class="color-picker-row">
+          <button class="color-btn active" data-color="#000000" style="background:#000000;" title="Black"></button>
+          <button class="color-btn" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid rgba(255,255,255,0.3);" title="White"></button>
+          <button class="color-btn" data-color="#FF1493" style="background:#FF1493;" title="Hot Pink"></button>
+          <button class="color-btn" data-color="#FF69B4" style="background:#FF69B4;" title="Pink"></button>
+          <button class="color-btn" data-color="#FFD700" style="background:#FFD700;" title="Gold"></button>
+          <button class="color-btn" data-color="#FF6347" style="background:#FF6347;" title="Coral"></button>
+          <button class="color-btn" data-color="#9370DB" style="background:#9370DB;" title="Purple"></button>
+          <button class="color-btn" data-color="#4169E1" style="background:#4169E1;" title="Blue"></button>
+          <button class="color-btn" data-color="#32CD32" style="background:#32CD32;" title="Green"></button>
+          <button class="color-btn" data-color="#FF4500" style="background:#FF4500;" title="Orange"></button>
+          <input type="color" id="customColorPicker" value="#000000" title="Custom color" style="width:40px;height:40px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);cursor:pointer;background:none;" />
+        </div>
       </div>
 
       <!-- Date toggle -->
