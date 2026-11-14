@@ -416,28 +416,88 @@ async function startShooting() {
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
     
-    // Define themes inline since themes.js might not load
-    const themeColors = {
-      'sakura': '#ffd6e7',
-      'midnight-rose': '#2a0018',
-      'cottagecore': '#fde8c8',
-      'aurora': '#050a14',
-      'golden-hour': '#ff9f1c',
-      'lavender-dream': '#e9d5ff',
-      'neon-cyber': '#03001e',
-      'blue-sky': '#bae6fd',
-      'forest-moss': '#dcfce7',
-      'galaxy': '#0d0630',
-      'retro-film': '#f0e8d0',
-      'y2k-holo': '#ffe0f7',
-      'dark-academia': '#2d1e0a',
-      'winter-snow': '#e0f2fe',
-      'velvet-night': '#0a0014',
-      'pastel-candy': '#fff0f8'
+    // Define themes inline with decorations
+    const themes = {
+      'sakura': { 
+        color: '#ffd6e7',
+        draw: (ctx, w, h) => {
+          // Gradient
+          const g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#fff0f5');
+          g.addColorStop(0.5, '#ffd6e7');
+          g.addColorStop(1, '#ffb7c5');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Simple scattered hearts
+          ctx.fillStyle = 'rgba(255,77,136,0.15)';
+          for (let i = 0; i < 20; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            const size = 8 + (i % 3) * 4;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      },
+      'midnight-rose': { color: '#2a0018' },
+      'cottagecore': { color: '#fde8c8' },
+      'aurora': { 
+        color: '#050a14',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#050a14');
+          g.addColorStop(0.5, '#08122a');
+          g.addColorStop(1, '#050a14');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+          
+          // Stars
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          for (let i = 0; i < 40; i++) {
+            const x = (i * 137.5) % w;
+            const y = (i * 61.8) % h;
+            ctx.fillRect(x, y, 1, 1);
+          }
+        }
+      },
+      'golden-hour': { 
+        color: '#ff9f1c',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#ff6b35');
+          g.addColorStop(0.5, '#ff9f1c');
+          g.addColorStop(1, '#ffe08a');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+        }
+      },
+      'lavender-dream': { color: '#e9d5ff' },
+      'neon-cyber': { color: '#03001e' },
+      'blue-sky': { 
+        color: '#bae6fd',
+        draw: (ctx, w, h) => {
+          const g = ctx.createLinearGradient(0, 0, 0, h);
+          g.addColorStop(0, '#bae6fd');
+          g.addColorStop(0.7, '#7dd3fc');
+          g.addColorStop(1, '#38bdf8');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, w, h);
+        }
+      },
+      'forest-moss': { color: '#dcfce7' },
+      'galaxy': { color: '#0d0630' },
+      'retro-film': { color: '#f0e8d0' },
+      'y2k-holo': { color: '#ffe0f7' },
+      'dark-academia': { color: '#2d1e0a' },
+      'winter-snow': { color: '#e0f2fe' },
+      'velvet-night': { color: '#0a0014' },
+      'pastel-candy': { color: '#fff0f8' }
     };
     
-    const bgColor = themeColors[state.currentTheme] || '#ffb7c5';
-    console.log('Using theme:', state.currentTheme, 'color:', bgColor);
+    const theme = themes[state.currentTheme] || themes['sakura'];
+    console.log('Using theme:', state.currentTheme);
     
     console.log('Step 2: Setup canvas');
     stripCanvas.width = 404;
@@ -445,8 +505,24 @@ async function startShooting() {
     const ctx = stripCanvas.getContext('2d');
     
     console.log('Step 3: Draw background');
-    ctx.fillStyle = bgColor;
+    ctx.fillStyle = theme.color;
     ctx.fillRect(0, 0, 404, 1800);
+    
+    // Draw theme decorations if available
+    if (theme.draw) {
+      try {
+        ctx.save();
+        theme.draw(ctx, 404, 1800);
+        ctx.restore();
+        console.log('Theme decorations drawn');
+      } catch (e) {
+        console.warn('Theme decoration failed:', e.message);
+      }
+    }
+    
+    // Reset context
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
     
     console.log('Step 4: Draw photos');
     // Draw each photo
@@ -467,7 +543,6 @@ async function startShooting() {
         ctx.font = '30px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('Error ' + (i+1), 202, y + 180);
-        ctx.fillStyle = bgColor; // Reset
       }
     }
     
