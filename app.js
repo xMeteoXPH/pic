@@ -415,7 +415,29 @@ async function startShooting() {
     console.log('Step 1: Get theme info');
     const caption = captionInput.value.trim();
     const showDate = showDateChk.checked;
-    const bgColor = '#ffb7c5'; // Use simple pink for now
+    
+    // Define themes inline since themes.js might not load
+    const themeColors = {
+      'sakura': '#ffd6e7',
+      'midnight-rose': '#2a0018',
+      'cottagecore': '#fde8c8',
+      'aurora': '#050a14',
+      'golden-hour': '#ff9f1c',
+      'lavender-dream': '#e9d5ff',
+      'neon-cyber': '#03001e',
+      'blue-sky': '#bae6fd',
+      'forest-moss': '#dcfce7',
+      'galaxy': '#0d0630',
+      'retro-film': '#f0e8d0',
+      'y2k-holo': '#ffe0f7',
+      'dark-academia': '#2d1e0a',
+      'winter-snow': '#e0f2fe',
+      'velvet-night': '#0a0014',
+      'pastel-candy': '#fff0f8'
+    };
+    
+    const bgColor = themeColors[state.currentTheme] || '#ffb7c5';
+    console.log('Using theme:', state.currentTheme, 'color:', bgColor);
     
     console.log('Step 2: Setup canvas');
     stripCanvas.width = 404;
