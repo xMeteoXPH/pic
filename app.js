@@ -2,6 +2,39 @@
 //  Photo Booth App  —  Solo + Together (WebRTC via PeerJS)
 // ─────────────────────────────────────────────────────────
 
+// ── Debug Logger for Mobile ──────────────────────────────
+const debugLog = [];
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+function addDebugLog(msg, type = 'log') {
+  const panel = document.getElementById('debugPanel');
+  const log = document.getElementById('debugLog');
+  if (panel && log) {
+    panel.style.display = 'block';
+    const color = type === 'error' ? '#f00' : type === 'warn' ? '#ff0' : '#0f0';
+    const time = new Date().toLocaleTimeString();
+    log.innerHTML += `<div style="color:${color};margin:2px 0;">[${time}] ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+console.log = function(...args) {
+  originalConsoleLog.apply(console, args);
+  addDebugLog(args.join(' '), 'log');
+};
+
+console.error = function(...args) {
+  originalConsoleError.apply(console, args);
+  addDebugLog('❌ ' + args.join(' '), 'error');
+};
+
+console.warn = function(...args) {
+  originalConsoleWarn.apply(console, args);
+  addDebugLog('⚠️ ' + args.join(' '), 'warn');
+};
+
 // ── Constants ──────────────────────────────────────────
 const PHOTO_COUNT      = 4;
 const COUNTDOWN_SEC    = 3;
