@@ -43,12 +43,14 @@ console.warn = function(...args) {
 const PHOTO_COUNT      = 4;
 const COUNTDOWN_SEC    = 3;
 const BETWEEN_SHOTS_MS = 900;
-const PHOTO_W          = 360;
-const PHOTO_H          = 360;
-const PADDING          = 22;
+// High quality for printing: 2" x 2" at 300 DPI = 600x600 pixels
+const PHOTO_W          = 600;
+const PHOTO_H          = 600;
+const PADDING          = 40;
 const STRIP_W          = PHOTO_W + PADDING * 2;
-const TOG_PW           = 260;
-const TOG_PH           = 260;
+// Together mode: 1.5" x 1.5" each at 300 DPI = 450x450 pixels
+const TOG_PW           = 450;
+const TOG_PH           = 450;
 const TOG_SW           = TOG_PW * 2 + PADDING * 3;
 
 // ── State ───────────────────────────────────────────────
@@ -121,7 +123,11 @@ function updateStartBtn() {
 async function initCamera() {
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 720 }, height: { ideal: 720 }, facingMode: 'user' },
+      video: { 
+        width: { ideal: 1920, min: 1280 }, 
+        height: { ideal: 1920, min: 1280 }, 
+        facingMode: 'user' 
+      },
       audio: false,
     });
     video.srcObject   = state.stream;
@@ -222,7 +228,9 @@ function handleMessage(data) {
   if (data.type === 'videoFrame') renderPartnerFrame(data.frame);
   else if (data.type === 'countdown') showCountdownBoth(data.number);
   else if (data.type === 'capture') capturePartnerFrame(data.index);
+  else if (data.type === 'captureData') receivePartnerPhoto(data.index, data.photo);
   else if (data.type === 'flash') { triggerFlashEl(flashPartner); triggerFlashEl(flashMe); }
+  else if (data.type === 'startShooting') startShootingAsGuest();
 }
 
 // ── Partner video canvas ─────────────────────────────────
@@ -348,7 +356,7 @@ function captureMyFrame() {
     ctx.restore();
     
     // Lower quality for mobile compatibility (0.85 instead of 0.92)
-    const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.85);
+    const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.92);
     
     if (!dataUrl || dataUrl === 'data:,') {
       throw new Error('Failed to create image data');
@@ -370,6 +378,21 @@ function capturePartnerFrame(index) {
   state.partnerPhotos[index] = capturePartner.toDataURL('image/jpeg', 0.85);
 }
 
+// Receive partner's high quality photo data
+function receivePartnerPhoto(index, photoData) {
+  console.log('Received partner photo', index, 'length:', photoData.length);
+  state.partnerPhotos[index] = photoData;
+}
+
+// Guest device starts shooting when host triggers
+async function startShootingAsGuest() {
+  if (state.shooting) return;
+  console.log('Guest device: Starting shoot sequence...');
+  startShooting();
+}
+
+// ── Shoot sequence ───────────────────────────────────────
+
 // ── Shoot sequence ───────────────────────────────────────
 async function startShooting() {
   if (state.shooting) return;
@@ -381,25 +404,57 @@ async function startShooting() {
   retakeBtn.classList.add('hidden');
   stripSection.style.display = 'none';
   startHint.textContent = '';
-  if (state.mode === 'together') send({ type: 'startShooting' });
+  
+  // Only host starts the sequence, guest will start when receiving startShooting message
+  if (state.mode === 'together' && state.isHost) {
+    send({ type: 'startShooting' });
+  }
 
   console.log('Starting photo shoot...');
 
   for (let i = 0; i < PHOTO_COUNT; i++) {
     await runCountdown(COUNTDOWN_SEC);
     triggerFlash();
-    if (state.mode === 'together') { send({ type: 'flash' }); triggerFlashEl(flashPartner); }
+    if (state.mode === 'together') { 
+      send({ type: 'flash' }); 
+      triggerFlashEl(flashPartner); 
+    }
     
+    // Capture my own photo
     const photo = captureMyFrame();
     console.log('Photo', i+1, 'captured, length:', photo.length, 'starts with:', photo.substring(0, 30));
     state.photos.push(photo);
     
-    if (state.mode === 'together') { capturePartnerFrame(i); send({ type: 'capture', index: i }); }
+    // In together mode, send my photo to partner
+    if (state.mode === 'together') { 
+      console.log('Sending my photo', i, 'to partner...');
+      send({ type: 'captureData', index: i, photo: photo });
+    }
+    
     setDot(i, true);
     if (i < PHOTO_COUNT - 1) await sleep(BETWEEN_SHOTS_MS);
   }
 
   console.log('All photos captured:', state.photos.length, 'photos');
+  
+  // Wait a bit for partner photos to arrive
+  if (state.mode === 'together') {
+    console.log('Waiting for partner photos...');
+    showToast('⏳ Waiting for partner...');
+    
+    // Wait up to 5 seconds for all partner photos
+    let waitTime = 0;
+    while (state.partnerPhotos.length < PHOTO_COUNT && waitTime < 5000) {
+      await sleep(100);
+      waitTime += 100;
+    }
+    
+    if (state.partnerPhotos.length === PHOTO_COUNT) {
+      console.log('All partner photos received!');
+    } else {
+      console.warn('Only received', state.partnerPhotos.length, 'partner photos');
+    }
+  }
   
   state.shooting = false;
   showCountdownBoth(null);
@@ -1183,20 +1238,27 @@ async function startShooting() {
     const theme = themes[state.currentTheme] || themes['sakura'];
     console.log('Using theme:', state.currentTheme);
     
-    console.log('Step 2: Setup canvas');
-    stripCanvas.width = 404;
-    stripCanvas.height = 1800;
+    // Check if we're in together mode with partner photos
+    const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
+    const PW = isTogether ? 450 : 600;  // Photo width (high res for printing)
+    const PH = isTogether ? 450 : 600;  // Photo height
+    const SW = isTogether ? (450 * 2 + 40 * 3) : 680;  // Strip width
+    const stripH = 40 + (PH + 40) * 4 + 120;  // Strip height with footer
+    
+    console.log('Step 2: Setup canvas - isTogether:', isTogether, 'Width:', SW, 'Height:', stripH);
+    stripCanvas.width = SW;
+    stripCanvas.height = stripH;
     const ctx = stripCanvas.getContext('2d');
     
     console.log('Step 3: Draw background');
     ctx.fillStyle = theme.color;
-    ctx.fillRect(0, 0, 404, 1800);
+    ctx.fillRect(0, 0, SW, stripH);
     
     // Draw theme decorations if available
     if (theme.draw) {
       try {
         ctx.save();
-        theme.draw(ctx, 404, 1800);
+        theme.draw(ctx, SW, stripH);
         ctx.restore();
         console.log('Theme decorations drawn');
       } catch (e) {
@@ -1211,22 +1273,36 @@ async function startShooting() {
     console.log('Step 4: Draw photos');
     // Draw each photo
     for (let i = 0; i < 4; i++) {
-      const y = 22 + i * (360 + 22);
+      const y = 40 + i * (PH + 40);
       console.log('Drawing photo', i+1, 'of 4...');
       
       try {
-        const img = await loadImage(state.photos[i]);
-        ctx.drawImage(img, 22, y, 360, 360);
-        console.log('Photo', i+1, 'drawn successfully');
+        if (isTogether) {
+          // Together mode - draw both photos side by side
+          console.log('Drawing together mode - my photo and partner photo', i);
+          const myImg = await loadImage(state.photos[i]);
+          const ptImg = await loadImage(state.partnerPhotos[i]);
+          ctx.drawImage(myImg, 40, y, PW, PH);
+          ctx.drawImage(ptImg, 40 + PW + 40, y, PW, PH);
+          console.log('Both photos', i+1, 'drawn successfully');
+        } else {
+          // Solo mode - draw single photo
+          const img = await loadImage(state.photos[i]);
+          ctx.drawImage(img, 40, y, PW, PH);
+          console.log('Photo', i+1, 'drawn successfully');
+        }
       } catch (imgErr) {
         console.error('Photo', i+1, 'failed:', imgErr.message);
         // Draw error box
         ctx.fillStyle = '#ff0000';
-        ctx.fillRect(22, y, 360, 360);
+        ctx.fillRect(40, y, PW, PH);
+        if (isTogether) {
+          ctx.fillRect(40 + PW + 40, y, PW, PH);
+        }
         ctx.fillStyle = '#fff';
         ctx.font = '30px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Error ' + (i+1), 202, y + 180);
+        ctx.fillText('Error ' + (i+1), isTogether ? SW/2 : 340, y + PH/2);
       }
     }
     
@@ -1235,16 +1311,17 @@ async function startShooting() {
     if (caption || showDate) {
       ctx.fillStyle = '#222';
       ctx.textAlign = 'center';
-      const baseY = 1730;
+      const baseY = stripH - 80;
+      const centerX = SW / 2;  // Use dynamic center based on strip width
       
       if (caption) {
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText(caption, 202, baseY);
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(caption, centerX, baseY);
       }
       if (showDate) {
-        ctx.font = '13px sans-serif';
+        ctx.font = '20px sans-serif';
         const d = new Date().toLocaleDateString();
-        ctx.fillText(d, 202, caption ? baseY + 26 : baseY);
+        ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
       }
     }
     
@@ -2250,18 +2327,24 @@ function rebuildIfReady() {
     
     const theme = themes[state.currentTheme] || themes['sakura'];
     
-    stripCanvas.width = 404;
-    stripCanvas.height = 1800;
+    const isTogether = state.mode === 'together' && state.partnerPhotos.length === PHOTO_COUNT;
+    const PW = isTogether ? 450 : 600;
+    const PH = isTogether ? 450 : 600;
+    const SW = isTogether ? (450 * 2 + 40 * 3) : 680;
+    const stripH = 40 + (PH + 40) * 4 + 120;
+    
+    stripCanvas.width = SW;
+    stripCanvas.height = stripH;
     const ctx = stripCanvas.getContext('2d');
     
     // Background with decorations
     ctx.fillStyle = theme.color;
-    ctx.fillRect(0, 0, 404, 1800);
+    ctx.fillRect(0, 0, SW, stripH);
     
     if (theme.draw) {
       try {
         ctx.save();
-        theme.draw(ctx, 404, 1800);
+        theme.draw(ctx, SW, stripH);
         ctx.restore();
       } catch (e) {
         console.warn('Theme decoration failed:', e.message);
@@ -2276,23 +2359,52 @@ function rebuildIfReady() {
     state.photos.forEach((photoData, i) => {
       const img = new Image();
       img.onload = () => {
-        const y = 22 + i * (360 + 22);
-        ctx.drawImage(img, 22, y, 360, 360);
+        const y = 40 + i * (PH + 40);
         
-        // Draw text on last photo
-        if (i === 3 && (caption || showDate)) {
-          ctx.fillStyle = '#222';
-          ctx.textAlign = 'center';
-          const baseY = 1730;
-          
-          if (caption) {
-            ctx.font = 'bold 18px sans-serif';
-            ctx.fillText(caption, 202, baseY);
-          }
-          if (showDate) {
-            ctx.font = '13px sans-serif';
-            const d = new Date().toLocaleDateString();
-            ctx.fillText(d, 202, caption ? baseY + 26 : baseY);
+        if (isTogether && state.partnerPhotos[i]) {
+          // Draw both photos side by side
+          ctx.drawImage(img, 40, y, PW, PH);
+          const ptImg = new Image();
+          ptImg.onload = () => {
+            ctx.drawImage(ptImg, 40 + PW + 40, y, PW, PH);
+            // Draw text on last photo
+            if (i === 3 && (caption || showDate)) {
+              ctx.fillStyle = '#222';
+              ctx.textAlign = 'center';
+              const baseY = stripH - 80;
+              const centerX = SW / 2;
+              
+              if (caption) {
+                ctx.font = 'bold 28px sans-serif';
+                ctx.fillText(caption, centerX, baseY);
+              }
+              if (showDate) {
+                ctx.font = '20px sans-serif';
+                const d = new Date().toLocaleDateString();
+                ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
+              }
+            }
+          };
+          ptImg.src = state.partnerPhotos[i];
+        } else {
+          // Solo mode - single photo
+          ctx.drawImage(img, 40, y, PW, PH);
+          // Draw text on last photo
+          if (i === 3 && (caption || showDate)) {
+            ctx.fillStyle = '#222';
+            ctx.textAlign = 'center';
+            const baseY = stripH - 80;
+            const centerX = SW / 2;
+            
+            if (caption) {
+              ctx.font = 'bold 28px sans-serif';
+              ctx.fillText(caption, centerX, baseY);
+            }
+            if (showDate) {
+              ctx.font = '20px sans-serif';
+              const d = new Date().toLocaleDateString();
+              ctx.fillText(d, centerX, caption ? baseY + 40 : baseY);
+            }
           }
         }
       };
@@ -2318,9 +2430,12 @@ retakeBtn.addEventListener('click', () => {
 
 downloadBtn.addEventListener('click', () => {
   const a = document.createElement('a');
-  a.download = 'our-photobooth-strip.png';
+  const date = new Date().toISOString().split('T')[0];
+  a.download = `photobooth-${date}.png`;
+  // PNG for lossless quality - best for printing
   a.href = stripCanvas.toDataURL('image/png');
   a.click();
+  showToast('📥 High-res image saved!');
 });
 
 newBtn.addEventListener('click', () => {
